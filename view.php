@@ -386,7 +386,11 @@ display: table;
   
   </div>
 
-  
+  <!-- loader -->
+  <div id="loader" style="display:none" class="spinner-grow text-info" role="status">
+      <span class="visually-hidden">Loading...</span>
+  </div>
+  <!-- loader end -->
 
 <!-- Modal -->
 <div id="myModal" role="dialog">
@@ -444,7 +448,7 @@ display: table;
 
           <!-- The Modal -->
              <div class="container col-8 border shadow p-3 mb-5 bg-body rounded">
-             <form action="<?php echo $_SERVER["PHP_SELF"];?>" method="post" enctype="multipart/form-data">
+             <form action="<?php echo $_SERVER["PHP_SELF"];?>" method="post" enctype="multipart/form-data" onsubmit = "return validate()">
             <div class="container">
               <h2 class="text-center">Edit Student</h2>
               <div class="form-group row mt-2">
@@ -456,7 +460,7 @@ display: table;
               </div>
               <label for="class" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Class:</label>
               <div class="col-sm-4">
-                <select class="form-select mt-2" name="class_id" aria-label="Default select example">
+                <select class="form-select mt-2" id="class_id" name="class_id" aria-label="Default select example">
                 <?php
                 $sql1 = "SELECT * FROM class_details WHERE status = 'active'";
                 $classes = $conn->query($sql1);
@@ -472,11 +476,11 @@ display: table;
               <div class="form-group row mt-2">
               <label for="age" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Age:</label>
               <div class="col-sm-4">
-                <input type="number" class="form-control mt-2" id="age" name="age" value="<?php echo $age; ?>" required>
+                <input type="number" class="form-control mt-2" id="age" name="age" value="<?php echo $age; ?>" >
               </div>
               <label for="gender" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Gender:</label>
               <div class="col-sm-4">
-                <select class="form-select mt-2" name="gender" aria-label="Default select example">
+                <select class="form-select mt-2" id="gender" name="gender" aria-label="Default select example">
                 <option value="male" <?php echo ($gender == 'male') ? 'selected' : ''; ?>>Male</option>
                 <option value="female" <?php echo ($gender == 'female') ? 'selected' : ''; ?>>Female</option>
                 <option value="other" <?php echo ($gender == 'other') ? 'selected' : ''; ?>>Other</option>
@@ -486,7 +490,7 @@ display: table;
               <div class="form-group row mt-2">
               <label for="dob" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>DOB:</label>
               <div class="col-sm-4">
-                <input type="date" class="form-control mt-2" id="dob" name="date" value="<?php echo $date; ?>" required>
+                <input type="date" class="form-control mt-2" id="dob" name="date" value="<?php echo $date; ?>" >
               </div>
               
               <label for="file" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>File:</label>
@@ -562,13 +566,20 @@ display: table;
                     formData.append('files[]', files[i]);
                     }
 		        	      formData.append('id', id);
-                  
+                    document.getElementById('loader').style.display = 'block';
                     var xhr = new XMLHttpRequest();
                     xhr.open('POST', 'view.php', true);
                     xhr.onreadystatechange = function() {
-                    if (xhr.readyState == 4 && xhr.status == 200) {
+                      if (xhr.readyState == 4) {
+                      // Hide loader
+                      document.getElementById('loader').style.display = 'none';
+
+                      if (xhr.status == 200) {
                         alert('Files uploaded successfully');
-		        		        window.location.href = 'view.php?action=update&id=' + id;
+                        window.location.href = 'view.php?action=update&id=' + id;
+                      } else {
+                        alert('File upload failed. Please try again.');
+                      }
                     }
                     
                     };
@@ -582,6 +593,8 @@ display: table;
                 console.log('ok');
                 console.log(image_id);
                 console.log(student_id);
+                document.getElementById('loader').style.display = 'block';
+
                 var xhr = new XMLHttpRequest();
                 xhr.open('GET', 'view.php?image_id=' + image_id, true);
                 xhr.onreadystatechange = function() {
@@ -876,6 +889,49 @@ $(document).ready(function() {
         console.log('Testing Div - ', JSON.stringify(imagePath));
         // $('#modalBody').text('$path');
       }
+    </script>
+
+    <script>
+          function validate() {
+        var name = document.getElementById('name').value;
+        var age = document.getElementById('age').value;
+        var class_id = document.getElementById('class_id').value;
+        var dob = document.getElementById('dob').value;
+        var gender = document.getElementById('gender').value;
+
+        var namePattern = /^[a-zA-Z\s]+$/;
+        var datePattern = /^\d{4}-\d{2}-\d{2}$/;
+
+        if (!name || !namePattern.test(name)) {
+            alert('Please enter a valid name without special characters.');
+            return false;
+        }
+
+        if (!age) {
+            alert("Please enter a valid age");
+            return false;
+        }
+
+        if (!class_id) {
+            alert("Please select a class");
+            return false;
+        }
+
+        if (!dob || !datePattern.test(dob)) {
+            alert('Please enter a valid date in the format YYYY-MM-DD.');
+            return false;
+        }
+
+        if (gender === '') {
+            alert('Please select a gender.');
+            return false;
+        }
+
+        return true;
+    }
+
+
+
     </script>
 <!-- 
   <script src="js/modal"></script> -->
