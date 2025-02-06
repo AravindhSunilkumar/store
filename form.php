@@ -190,7 +190,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
 
 <div class="container ">
     <center><h3>Register</h3></center>
-    <form action="<?php echo $_SERVER["PHP_SELF"]; ?>" method="post" enctype="multipart/form-data">
+    <form action="<?php echo $_SERVER["PHP_SELF"]; ?>" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
        <?php
        
        $sql3 = "SELECT * FROM student_details ORDER BY id DESC LIMIT 1";
@@ -200,11 +200,11 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
 ?>
     <div class="mb-3">
             <label for="student_id" class="form-label">Student Id :</label>
-            <input type="text" name="student_id" class="form-control" id="student_id" value="<?php echo $register_id; ?>" readonly required>
+            <input type="text" name="student_id" class="form-control" id="student_id" value="<?php echo $register_id; ?>" readonly>
         </div>    
     <div class="mb-3">
             <label for="name" class="form-label"><span class="text-danger">*</span>Name :</label>
-            <input type="text" name="name" class="form-control" id="name" required>
+            <input type="text" name="name" class="form-control" id="name">
         </div>
         <div class="mb-3">
             <label for="class"><span class="text-danger">*</span>Class :</label>
@@ -215,8 +215,6 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
                 $sql = "SELECT * FROM class_details WHERE status = 'active'";
                 $classes = $conn->query($sql);
                 
-                // echo "<option value='' disabled selected>Select a class</option>";
-                
                 while($row = $classes->fetch_assoc()){
                     echo "<option value=".$row['id'].">".$row['class']."</option>";
                 }
@@ -226,35 +224,35 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
         </div>
         <div class="mb-3">
             <label for="age" class="form-label"><span class="text-danger">*</span>Age :</label>
-            <input type="number" name="age" class="form-control" id="age" required>
+            <input type="number" name="age" class="form-control" id="age">
         </div>
         <div class="mb-3">
             <label for="date" class="form-label"><span class="text-danger">*</span>Date of Birth :</label>
-            <input type="date" name="date" class="form-control" id="date" required>
+            <input type="date" name="date" class="form-control" id="date">
         </div>
         <div class="mb-3">
             <label for="file" class="form-label"><span class="text-danger">*</span>Image :</label>
-            <input type="file" name="file" class="form-control" id="file" required>
+            <input type="file" name="file" class="form-control" id="file">
             <span class="text-danger"><i>*Hint:Uploading file must be jpg,png,jpeg or gif</i></span>
         </div>
         <div class="mb-3">
             <label for="file" class="form-label">Gallery :</label>
-            <input type="file" name="gallery[]" multiple="multiple" class="form-control" id="gallery" >
+            <input type="file" name="gallery[]" multiple="multiple" class="form-control" id="gallery">
             <span class="text-danger"><i>*Hint:Uploading file must be jpg,png,jpeg or gif</i></span>
         </div>
         <div class="mb-3">
         
             <label for="gender" class="form-label"><span class="text-danger">*</span>Gender :</label>
             <div class="form-check form-check-inline">
-                <input type="radio" name="gender" class="form-check-input" id="male" value="male" required>
+                <input type="radio" name="gender" class="form-check-input" id="male" value="male">
                 <label class="form-check-label" for="male">Male</label>
             </div>
             <div class="form-check form-check-inline">
-                <input type="radio" name="gender" class="form-check-input" id="female" value="female" required>
+                <input type="radio" name="gender" class="form-check-input" id="female" value="female">
                 <label class="form-check-label" for="female">Female</label>
             </div>
             <div class="form-check form-check-inline">
-                <input type="radio" name="gender" class="form-check-input" id="other" value="other" required>
+                <input type="radio" name="gender" class="form-check-input" id="other" value="other">
                 <label class="form-check-label" for="other">Other</label>
             </div>
         </div>
@@ -262,6 +260,62 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
     </form>
 </div>
 
+<script>
+    function validateForm() {
+        var name = document.getElementById('name').value;
+        var age = document.getElementById('age').value;
+        var date = document.getElementById('date').value;
+        var file = document.getElementById('file').value;
+        var gender = document.querySelector('input[name="gender"]:checked');
+        var classSelect = document.querySelector('select[name="class"]').value;
+
+        var namePattern = /^[a-zA-Z\s]+$/;
+
+        if (!name || !namePattern.test(name)) {
+            alert('Please enter a valid name without special characters.');
+            return false;
+        }
+
+        if (!classSelect) {
+            alert('Please select a class.');
+            return false;
+        }
+
+        if (!age) {
+            alert('Please enter age.');
+            return false;
+        }
+
+        if (!date) {
+            alert('Please enter date of birth.');
+            return false;
+        }
+
+        var datePattern = /^\d{4}-\d{2}-\d{2}$/;
+        if (!datePattern.test(date)) {
+            alert('Please enter a valid date in the format DD-MM-YYYY.');
+            return false;
+        }
+
+        var dateObj = new Date(date);
+        if (isNaN(dateObj.getTime())) {
+            alert('Please enter a valid date.');
+            return false;
+        }
+
+        if (!file) {
+            alert('Please upload an image.');
+            return false;
+        }
+
+        if (!gender) {
+            alert('Please select a gender.');
+            return false;
+        }
+
+        return true;
+    }
+</script>
 
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
