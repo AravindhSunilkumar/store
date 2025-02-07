@@ -41,6 +41,8 @@ if (isset($_FILES['files']) && isset($_POST['id'])) {
 }
 
 
+
+
 $name = $age = $class = $gender ='';
 if(($_SERVER['REQUEST_METHOD'] == 'POST') && (isset($_POST['supdate']))){
  
@@ -137,6 +139,46 @@ if(($_SERVER['REQUEST_METHOD'] == 'POST') && (isset($_POST['supdate']))){
 
     $name = $age = $class = $gender ='';
 }
+
+if(isset($_GET['action']) && $_GET['action'] == 'delete'){
+  $id = (int)$_GET['id'];
+  $sql = "UPDATE student_details SET status = 'deleted' WHERE id = '$id'";
+  if ($conn->query($sql) === TRUE) {
+  // Get the priority of the deleted row
+  $prioritySql = "SELECT priority FROM student_details WHERE id = '$id'";
+  $priorityResult = $conn->query($prioritySql);
+  if ($priorityResult->num_rows > 0) {
+    $priorityRow = $priorityResult->fetch_assoc();
+    $priority = $priorityRow['priority'];
+    $lastPrioritySql = "SELECT MAX(priority) AS max_priority FROM student_details where status != 'deleted'";
+    $lastPriorityResult = $conn->query($lastPrioritySql);
+    if ($lastPriorityResult->num_rows > 0) {
+      $lastPriorityRow = $lastPriorityResult->fetch_assoc();
+      $maxPriority = $lastPriorityRow['max_priority'];
+
+      // Swap priorities
+      $updateDeletedPrioritySql = "UPDATE student_details SET priority = $maxPriority WHERE id = '$id'";
+      $conn->query($updateDeletedPrioritySql);
+
+      $updateMaxPrioritySql = "UPDATE student_details SET priority = $priority WHERE priority = $maxPriority AND id != '$id'";
+      $conn->query($updateMaxPrioritySql);
+    }
+    echo "<script>
+    alert('Record deleted successfully. Priority was: $priority');
+    window.location.href = 'view.php';
+    </script>";
+  } else {
+    echo "<script>
+    alert('Record deleted successfully');
+    window.location.href = 'view.php';
+    </script>";
+  }
+  } else {
+ echo "<script>alert('Error deleting record: ' . $conn->error')</script>";;
+  }
+}
+
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -144,219 +186,9 @@ if(($_SERVER['REQUEST_METHOD'] == 'POST') && (isset($_POST['supdate']))){
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Display</title>
-  <style>
-    body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-  }
-  h2 {
-    color: #333;
-  }
-
-  input[type="number"] {
-    padding: 5px;
-    margin-right: 10px;
-  }
-  input[type="submit"] {
-    padding: 5px 10px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    cursor: pointer;
-  }
-  input[type="submit"]:hover {
-    background-color: #45a049;
-  }
-  .result {
-    margin-top: 20px;
-  }
-  .result p {
-    margin: 5px 0;
-  }
-
-body {font-family: Arial, Helvetica, sans-serif;}
-* {box-sizing: border-box;}
-
-/* Full-width input fields */
-/* input[type=text], input[type=password] {
-width: 100%;
-padding: 15px;
-margin: 5px 0 22px 0;
-display: inline-block;
-border: none;
-background: #f1f1f1;
-} */
-
-/* Add a background color when the inputs get focus */
-/* input[type=text]:focus, input[type=password]:focus {
-background-color: #ddd;
-outline: none;
-} */
-
-/* Set a style for all buttons */
-button {
-background-color: #04AA6D;
-color: white;
-padding: 14px 20px;
-margin: 8px 0;
-border: none;
-cursor: pointer;
-width: 100%;
-opacity: 0.9;
-}
-
-button:hover {
-opacity:1;
-}
-
-/* Extra styles for the cancel button */
-.cancelbtn {
-padding: 14px 20px;
-background-color: #f44336;
-}
-
-/* Float cancel and signup buttons and add an equal width */
-.cancelbtn, .signupbtn {
-float: left;
-width: 50%;
-}
-
-/* Add padding to container elements */
-.container {
-padding: 16px;
-}
-
-/* The Modal (background) */
-.modal {
-display: none; /* Hidden by default */
-position: fixed; /* Stay in place */
-z-index: 1; /* Sit on top */
-width: 50%;
-left: 25%;
-top: 0;
-width: 100%; /* Full width */
-height: 100%; /* Full height */
-overflow: auto; /* Enable scroll if needed */
-background-color:rgb(255, 255, 255);
-padding-top: 50px;
-}
-
-/* Modal Content/Box */
-.modal-content {
-background-color: #fefefe;
-margin: 5% auto 15% auto; /* 5% from the top, 15% from the bottom and centered */
-border: 1px solid #888;
-width: 80%; /* Could be more or less, depending on screen size */
-}
-
-/* Style the horizontal ruler */
-hr {
-border: 1px solid #f1f1f1;
-margin-bottom: 25px;
-}
-
-/* The Close Button (x) */
-.close {
-position: absolute;
-right: 35px;
-top: 15px;
-font-size: 40px;
-font-weight: bold;
-color: #f1f1f1;
-}
-
-.close:hover,
-.close:focus {
-color: #f44336;
-cursor: pointer;
-}
-
-/* Clear floats */
-.clearfix::after {
-content: "";
-clear: both;
-display: table;
-}
-
-/* Change styles for cancel button and signup button on extra small screens */
-@media screen and (max-width: 300px) {
-.cancelbtn, .signupbtn {
-   width: 100%;
-}
-}
-
-#myModal{
-  display: none;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
- 
-  /* z-index: 99; */
-}
 
 
-.input-switch{
-	display: none;
-}
-
-.label-switch{
-	display: inline-block;
-	position: relative;
-}
-
-.label-switch::before, .label-switch::after{
-	content: "";
-	display: inline-block;
-	cursor: pointer;
-	transition: all 0.5s;
-}
-
-.label-switch::before {
-    width: 3em;
-    height: 1em;
-    border: 1px solid #757575;
-    border-radius: 4em;
-    background: #888888;
-}
-
-.label-switch::after {
-    position: absolute;
-    left: 0;
-    top: -20%;
-    width: 1.5em;
-    height: 1.5em;
-    border: 1px solid #757575;
-    border-radius: 4em;
-    background: #ffffff;
-}
-
-.input-switch:checked ~ .label-switch::before {
-    background: #00a900;
-    border-color: #008e00;
-}
-
-.input-switch:checked ~ .label-switch::after {
-    left: unset;
-    right: 0;
-    background: #00ce00;
-    border-color: #009a00;
-}
-
-.info-text {
-	display: block;
-}
-
-.info-text::before{
-	content: "Inactive";
-}
-
-.input-switch:checked ~ .info-text::before{
-	content: "Active";
-}
-    </style>
-</style>
-  <link href="css/modal.css" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="css_files/modal.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
@@ -387,11 +219,21 @@ display: table;
   </div>
 
   <!-- loader -->
-  <div id="loader" style="display:none" class="spinner-grow text-info" role="status">
-      <span class="visually-hidden">Loading...</span>
+  <div id="blockScreen" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0, 0, 0, 0.22); z-index:9999;">
+    <div id="loader"   style=" position: absolute; left: 50%; top: 35%;" class="spinner-grow text-info" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>           
   </div>
   <!-- loader end -->
 
+  <!-- alert -->
+  <!-- <div id="alert" style="display:none;" class="alert  alert-dismissible fade show" role="alert">
+      <strong id='text'></strong> 
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+  </div> -->
+<!-- alert end -->
 <!-- Modal -->
 <div id="myModal" role="dialog">
   <div class="modal-dialog">
@@ -409,26 +251,18 @@ display: table;
 </div>
 
 
-  <!--table-->
+<?php
+
+
+?>
+
+
   <div class="container">
       
             <?php
                 
 
-                if(isset($_GET['action']) && $_GET['action'] == 'delete'){
-                  $id = (int)$_GET['id'];
-                  $sql = "DELETE FROM student_details WHERE id = '$id'";
-                  if ($conn->query($sql) === TRUE) {
-                    echo "<script>
-                      alert('Record deleted successfully');
-                      window.location.href = 'view.php';
-                    </script>";
-                    } else {
-                    echo "Error deleting record: " . $conn->error;
-                    }
-                    
-                    
-                }
+               
                 if(isset($_GET['action']) && $_GET['action'] == 'update'){
                   $id = $_GET['id'];
                   $sql = "SELECT student_details.id,student_details.name,student_details.age,student_details.gender,class_details.class,student_details.photo,student_details.dob,class_details.id  as c_id FROM student_details INNER JOIN class_details ON student_details.class_id = class_details.id WHERE student_details.id = '$id'";
@@ -446,210 +280,196 @@ display: table;
                     
           ?>
 
-          <!-- The Modal -->
-             <div class="container col-8 border shadow p-3 mb-5 bg-body rounded">
-             <form action="<?php echo $_SERVER["PHP_SELF"];?>" method="post" enctype="multipart/form-data" onsubmit = "return validate()">
-            <div class="container">
-              <h2 class="text-center">Edit Student</h2>
-              <div class="form-group row mt-2">
-              <label for="name" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Name:</label>
-              <div class="col-sm-4">
-                <input type="hidden" class="form-control mt-2" id="id" name="id" value="<?php echo $id; ?>" required>
-                
-                <input type="text" class="form-control mt-2" id="name" name="name" value="<?php echo $name; ?>" required>
-              </div>
-              <label for="class" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Class:</label>
-              <div class="col-sm-4">
-                <select class="form-select mt-2" id="class_id" name="class_id" aria-label="Default select example">
-                <?php
-                $sql1 = "SELECT * FROM class_details WHERE status = 'active'";
-                $classes = $conn->query($sql1);
-                
-                while($row1 = $classes->fetch_assoc()){
-                $selected = ($row1['class'] == $class) ? 'selected' : '';
-                echo "<option value=".$row1['id']." $selected>".$row1['class']."</option>";
-                }
-                ?>
-                </select>
-              </div>
-              </div>
-              <div class="form-group row mt-2">
-              <label for="age" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Age:</label>
-              <div class="col-sm-4">
-                <input type="number" class="form-control mt-2" id="age" name="age" value="<?php echo $age; ?>" >
-              </div>
-              <label for="gender" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Gender:</label>
-              <div class="col-sm-4">
-                <select class="form-select mt-2" id="gender" name="gender" aria-label="Default select example">
-                <option value="male" <?php echo ($gender == 'male') ? 'selected' : ''; ?>>Male</option>
-                <option value="female" <?php echo ($gender == 'female') ? 'selected' : ''; ?>>Female</option>
-                <option value="other" <?php echo ($gender == 'other') ? 'selected' : ''; ?>>Other</option>
-                </select>
-              </div>
-              </div>
-              <div class="form-group row mt-2">
-              <label for="dob" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>DOB:</label>
-              <div class="col-sm-4">
-                <input type="date" class="form-control mt-2" id="dob" name="date" value="<?php echo $date; ?>" >
-              </div>
-              
-              <label for="file" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>File:</label>
-              <div class="col-sm-4 row">
-                <div class="col-sm-10">
-                <input type="file" class="form-control mt-2" id="file" name="file" value="<?php echo $photo; ?>">
-                
-                </div>
-                <div class="col-sm-2 mt-3">
-                <?php echo "<td><a href='#' class='' data-toggle='modal' id='btnid' onclick='passMessage(\"$photo\")'><img src='witness.png' style='width:20px;height:auto;'></a></td>"; ?>
+             <div class="container col-8 border shadow p-3 mb-5 bg-body rounded dblur">
+                  <form action="<?php echo $_SERVER["PHP_SELF"];?>" method="post" enctype="multipart/form-data" onsubmit="if (!validate()) { document.getElementById('blockScreen').style.display = 'none'; document.querySelector('.dblur').style.filter = 'none'; return false; }">
+                  <div class="container">
+                      <h2 class="text-center">Edit Student</h2>
+                      <div class="form-group row mt-2">
+                          <label for="name" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Name:</label>
+                      <div class="col-sm-4">
+                      <input type="hidden" class="form-control mt-2" id="id" name="id" value="<?php echo $id; ?>" required>
+                      
+                      <input type="text" class="form-control mt-2" id="name" name="name" value="<?php echo $name; ?>" required>
+                    </div>
+                    <label for="class" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Class:</label>
+                    <div class="col-sm-4">
+                      <select class="form-select mt-2" id="class_id" name="class_id" aria-label="Default select example">
+                      <?php
+                      $sql1 = "SELECT * FROM class_details WHERE status = 'active'";
+                      $classes = $conn->query($sql1);
+                      
+                      while($row1 = $classes->fetch_assoc()){
+                      $selected = ($row1['class'] == $class) ? 'selected' : '';
+                      echo "<option value=".$row1['id']." $selected>".$row1['class']."</option>";
+                      }
+                      ?>
+                      </select>
+                    </div>
+                    </div>
+                    <div class="form-group row mt-2">
+                    <label for="age" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Age:</label>
+                    <div class="col-sm-4">
+                      <input type="number" class="form-control mt-2" id="age" name="age" value="<?php echo $age; ?>" >
+                    </div>
+                    <label for="gender" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Gender:</label>
+                    <div class="col-sm-4">
+                      <select class="form-select mt-2" id="gender" name="gender" aria-label="Default select example">
+                      <option value="male" <?php echo ($gender == 'male') ? 'selected' : ''; ?>>Male</option>
+                      <option value="female" <?php echo ($gender == 'female') ? 'selected' : ''; ?>>Female</option>
+                      <option value="other" <?php echo ($gender == 'other') ? 'selected' : ''; ?>>Other</option>
+                      </select>
+                    </div>
+                    </div>
+                    <div class="form-group row mt-2">
+                    <label for="dob" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>DOB:</label>
+                    <div class="col-sm-4">
+                      <input type="date" class="form-control mt-2" id="dob" name="date" value="<?php echo $date; ?>" >
+                    </div>
+                    
+                    <label for="file" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>File:</label>
+                    <div class="col-sm-4 row">
+                      <div class="col-sm-10">
+                      <input type="file" class="form-control mt-2" id="file" name="file" value="<?php echo $photo; ?>">
+                      
+                      </div>
+                      <div class="col-sm-2 mt-3">
+                      <?php echo "<td><a href='#' class='' data-toggle='modal' id='btnid' onclick='passMessage(\"$photo\")'><img src='witness.png' style='width:20px;height:auto;'></a></td>"; ?>
 
-                </div>
-              </div>
-              <div class="col-sm-2 mt-3">
-              </div>
-              </div>
-              <div class="form-group row mt-2">
-              <div class="col-12 text-center">
-                <input type="submit" class="btn btn-primary mt-2" name="supdate" value="Update">
-              </div>
-              </div>
-            </div>
-             </form>
+                      </div>
+                    </div>
+                    <div class="col-sm-2 mt-3">
+                    </div>
+                    </div>
+                    <div class="form-group row mt-2">
+                    <div class="col-12 text-center">
+                      <input type="submit" class="btn btn-primary mt-2" name="supdate" value="Update">
+                      
+                      
+                    </div>
+                    </div>
+                  </div>
+                  </form>
              </div>
 
 
-             <div class="container col-8 border shadow p-3 mb-5 bg-body rounded">
+             <div  class="container col-8 border shadow p-3 mb-5 bg-body rounded">
               <div class="col-12">
                 <h2 class="text-center">Gallery Images</h2>
               </div>
               <div class="row col-12 d-flex r">
                 <div class="col-2 text-end mt-3">
-                  <h6>Add Files</h6>
+                  <h6>Add Files :</h6>
                 </div>
                 <div class="col-10">
                 <input type="file" name="files[]" id="files" multiple = "multiple" >
                 </div>
-                <div class="col-12">
+                <div class="col-12" id="Gallery">
                   <div id="result">
                   <?php
-                  
                   $sql = "SELECT * FROM student_gallery WHERE student_id = '$id'";
                   $result = $conn->query($sql);
-                  // while ($row = $result->fetch_assoc()) {
-                  //   $photo = $row['gallery_photo'];
-                  //   echo "<div><img src='$photo' width='100px' height='100px' style='margin-bottom: 10px;'></div>";
-                  // }
-                  
-                  echo "<div style='display: flex; flex-wrap: wrap;'>"; // Start a flex container
-                  while ($row = $result->fetch_assoc()) {
-                    $photo = $row['gallery_photo'];
-                    $image_id = $row['gallery_id'];
-                    $student_id = $row['student_id'];
-                    echo "<div style='border: 1px solid #ddd; margin: 5px; position: relative; width: calc(20.33% - 10px);'>";
-                    echo "<span  style='position: absolute; top: 5px; right: 5px; color: black;cursor:pointer;' onclick='deletePhoto(\"$image_id,$student_id\")'>X</span>";
-                    echo "<img src='$photo' width='100%' height='auto' style='display: block;'>";
+
+                  if ($result->num_rows > 0) {
+                    echo "<div style='display: flex; flex-wrap: wrap;'>"; // Start a flex container
+                    while ($row = $result->fetch_assoc()) {
+                      $photo = $row['gallery_photo'];
+                      $image_id = $row['gallery_id'];
+                      $student_id = $row['student_id'];
+                      echo "<div style='border: 1px solid #ddd; margin: 5px; position: relative; width: calc(20.33% - 10px);'>";
+                      echo "<span style='position: absolute; top: 5px; right: 5px; color: black; cursor: pointer;' onclick='deletePhoto(\"$image_id,$student_id\")'>X</span>";
+                      echo "<img src='$photo' width='100%' height='auto' style='display: block;'>";
+                      echo "</div>";
+                    }
                     echo "</div>";
+                  } else {
+                    echo "<div class = 'col-12 text-center mt-3' ><p>No images found in the gallery.</p></div>";
                   }
-                  echo "</div>";
                   ?>
                   </div>
                 </div>
               </div>
              </div>
-             <script>
-                    document.getElementById('files').addEventListener('change', function() {
-		        	      var id =document.getElementById('id').value;
-                    var formData = new FormData();
-                    var files = document.getElementById('files').files;
-                    console.log(files);
-                    console.log(id);
-                    for (var i = 0; i < files.length; i++) {
-                    formData.append('files[]', files[i]);
-                    }
-		        	      formData.append('id', id);
-                    document.getElementById('loader').style.display = 'block';
-                    var xhr = new XMLHttpRequest();
-                    xhr.open('POST', 'view.php', true);
-                    xhr.onreadystatechange = function() {
-                      if (xhr.readyState == 4) {
-                      // Hide loader
-                      document.getElementById('loader').style.display = 'none';
+             
 
-                      if (xhr.status == 200) {
-                        alert('Files uploaded successfully');
-                        window.location.href = 'view.php?action=update&id=' + id;
-                      } else {
-                        alert('File upload failed. Please try again.');
-                      }
-                    }
-                    
-                    };
-                    xhr.send(formData);
-                });
-              
-              function deletePhoto(image_id) {
-                var ids = image_id.split(',');
-                var image_id = ids[0];
-                var student_id = ids[1];
-                console.log('ok');
-                console.log(image_id);
-                console.log(student_id);
-                document.getElementById('loader').style.display = 'block';
-
-                var xhr = new XMLHttpRequest();
-                xhr.open('GET', 'view.php?image_id=' + image_id, true);
-                xhr.onreadystatechange = function() {
-                  if (xhr.readyState == 4 && xhr.status == 200) {
-                    alert('Photo deleted successfully');
-                    window.location.href = 'view.php?action=update&id=' + student_id;
-                  }
-                };
-                xhr.send();
-              }
-    </script>
-    
-    <?php
-	
-
-    ?>
              
 
 
 <?php
-
-
-?>
-<?php
 }}
 mysqli_free_result($result);
-}else{
-  ?>
-  <div class="row col-12 d-flex text-align-center">
-    <div class="row col-6">
-    <h2>Search Students</h2>
-    <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method="get">
-    <div class="col-8 d-flex">
-    <select class="form-select" name="id" aria-label="Default select example">
-                  <?php
-                  $sql = "SELECT * FROM class_details WHERE status = 'active'";
-                  $classes = $conn->query($sql);
-                  echo "<option value='default'  selected>Select a class</option>";
-                  while($row = $classes->fetch_assoc()){
-                      
-                    if(isset($_GET['filter']) && $_GET['id'] == $row['id']){
-                      echo "<option selected>".$row['class']."</option>";
+}elseif(isset($_GET['action']) && $_GET['action'] == 'gallery'){
+  //Gallery view----==================================================Gallery view================================Gallery view================================Gallery view===============================================================
+  $id = $_GET['id'];
+  $name = $_GET['name'];
+  $sql = "SELECT student_gallery.gallery_photo, student_details.name FROM student_gallery INNER JOIN student_details ON student_gallery.student_id = student_details.id WHERE student_gallery.student_id = '$id'";
+  $result = $conn->query($sql);
+  if($result->num_rows > 0){
+    ?>
+    <div class="container border shadow">
+          <div class="row col-12 text-center">
+            <h2>Gallery</h2>
+          </div>
+          <hr><hr>
+          <div class="row col-12 text-center">
+            <strong><p>Name : <?php echo ucfirst($name);?> </p></strong>
+          </div>
+          
+          
+          <div class="row mt-4">
+    <?php
     
-                    }else{
-                      echo "<option value=".$row['id'].">".$row['class']."</option>";
-                  }
-                }
-                  
-                  ?>
-    </select>
-    <input type="submit" value="Filter" name="filter" class="btn btn-primary ms-2">
-    <a href="view.php"  class="btn btn-warning ms-2">Clear</a>
+    while($row=$result->fetch_assoc()){
+      ?>
+      
+          
+            <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+              <div class="card" style="width: 100%;">
+                <img class="card-img-top" src="<?php echo $row['gallery_photo'] ?>" alt="Card image cap">
+              </div>
+            </div>
+            
+         
+      
+      
+      
+      <?php } ?> 
+        </div>
+      </div>
+      <?php
+  }
+
+}else{
+  //students view----==================================================students view================================students view================================students view===============================================================
+  ?>
+  <div class="row col-12 d-flex text-align-center ">
+    <div class="row col-6">
+      <h2>Search Students</h2>
+      <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method="get">
+      <div class="col-8 d-flex">
+          <select class="form-select" name="id" aria-label="Default select example">
+                        <?php
+                        $sql = "SELECT * FROM class_details WHERE status = 'active'";
+                        $classes = $conn->query($sql);
+                        echo "<option value='default'  selected>Select a class</option>";
+                        while($row = $classes->fetch_assoc()){
+                            
+                          if(isset($_GET['filter']) && $_GET['id'] == $row['id']){
+                            echo "<option selected>".$row['class']."</option>";
+          
+                          }else{
+                            echo "<option value=".$row['id'].">".$row['class']."</option>";
+                        }
+                      }
+                        
+                        ?>
+          </select>
+          <input type="submit" value="Filter" name="filter" class="btn btn-primary ms-2">
+          <a href="view.php"  class="btn btn-warning ms-2">Clear</a>
+      </div>
+      </form>
     </div>
-    </form>
-    </div>
+    <!-- <input type="text" name="studentname" id="student_name"> -->
+    
   </div>
   </form>
     </div>
@@ -658,8 +478,8 @@ mysqli_free_result($result);
   </div>
  
   </div>
-  <div class="container">
-  <table class="table table-primary">
+  <div class="container dblur">
+  <table class="table table-primary dblur">
       
        
 
@@ -682,6 +502,7 @@ mysqli_free_result($result);
           <th scope="col " style="text-align: center;">Gender</th>
           <th scope="col " style="text-align: center;">Action</th>
           <th scope="col " style="text-align: center;">Image</th>
+          <th scope="col " style="text-align: center;">Gallery</th>
           <th scope="col " style="text-align: center;">Status</th>
 
           
@@ -690,10 +511,10 @@ mysqli_free_result($result);
       <tbody>
     <?php
     if($c_id == 'default'){
-    $sql = "SELECT student_details.id,student_details.name,student_details.age,student_details.gender,class_details.class,student_details.priority,student_details.photo, student_details.register_id,student_details.status,student_details.dob FROM student_details INNER JOIN class_details ON student_details.class_id = class_details.id ORDER BY student_details.priority ASC";
+    $sql = "SELECT student_details.id,student_details.name,student_details.age,student_details.gender,class_details.class,student_details.priority,student_details.photo, student_details.register_id,student_details.status,student_details.dob FROM student_details INNER JOIN class_details ON student_details.class_id = class_details.id WHERE student_details.status = 'active' OR student_details.status = 'inactive' ORDER BY student_details.priority ASC";
 
     }else{
-    $sql = "SELECT student_details.id,student_details.name,student_details.age,student_details.gender,class_details.class,student_details.priority,student_details.photo, student_details.register_id,student_details.status,student_details.dob FROM student_details INNER JOIN class_details ON student_details.class_id = class_details.id WHERE class_id = '$c_id' ORDER BY student_details.priority ASC";
+    $sql = "SELECT student_details.id,student_details.name,student_details.age,student_details.gender,class_details.class,student_details.priority,student_details.photo, student_details.register_id,student_details.status,student_details.dob FROM student_details INNER JOIN class_details ON student_details.class_id = class_details.id WHERE class_id = '$c_id' AND  student_details.status = 'active' OR student_details.status = 'inactive' ORDER BY student_details.priority ASC";
     }
     $result = $conn->query($sql);
     if ($result->num_rows > 0) {
@@ -703,20 +524,23 @@ mysqli_free_result($result);
         echo "<tr>";
         
         echo "<td class='text-center'>" . $row["register_id"]. "</td>";
-        echo "<td >" . $row["name"]. "</td>";
-        echo "<td class='text-center'>" . $row["class"]. "</td>";
+        echo "<td >" . ucfirst($row["name"]). "</td>";
+        echo "<td class='text-center'>" . ucfirst($row["class"]). "</td>";
         echo "<td class='text-center'>" . $row["age"]. "</td>";
-        echo "<td class='text-center'>" . $row["dob"]. "</td>";
-        echo "<td class='text-center'>" . $row['gender']. "</td>";
+        echo "<td class='text-center'>" . date('jS M Y', strtotime($row["dob"])). "</td>";
+        echo "<td class='text-center'>" . ucfirst($row['gender']). "</td>";
         
        
-        echo "<td class='text-center'>
-        <a href='$self?action=update&id=$id' class='btn btn-success'>edit</a>
-        <a href='$self?action=delete&id=$id' class='btn btn-danger'>delete</a></td>";
+        echo "<td  class='text-center'>
+        <a href='$self?action=update&id=$id' class=''><img src='edit.png' style='width:20px;height:auto;' ></a>
+        <div style='display:inline-block; width:10px;'></div>
+        <a href='#' class='' onclick='confirmDelete(\"$id\")'><img src='delete.png' style='width:20px;height:auto;' ></a>
+        </td>";
         
         $path =$row['photo'];
         // echo "<td><a href=''><img src='$path' style='width:50px;height:auto;'></a></td>";
         echo "<td class='text-center'><a href='#' class='' data-toggle='modal' id='btnid' onclick='passMessage(\"$path\")'><img src='witness.png' style= 'width:20px;height:auto;' ></a></td>";
+        echo "<td class='text-center'><a href='$self?action=gallery&id=$id&name=$name'   ><img src='gallery.png' style= 'width:20px;height:auto;' ></a></td>";
        
         $i = $row['id'];
         $checked = ($row['status'] == 'active') ? 'checked' : '';
@@ -733,13 +557,13 @@ mysqli_free_result($result);
       
 
   }else{
-    $sql2 = "SELECT student_details.id, student_details.name, student_details.age, student_details.gender, class_details.class, student_details.priority,student_details.photo,student_details.register_id,student_details.status,student_details.dob FROM student_details INNER JOIN class_details ON student_details.class_id = class_details.id ORDER BY student_details.priority ASC";
+    $sql2 = "SELECT student_details.id, student_details.name, student_details.age, student_details.gender, class_details.class, student_details.priority,student_details.photo,student_details.register_id,student_details.status,student_details.dob FROM student_details INNER JOIN class_details ON student_details.class_id = class_details.id WHERE student_details.status = 'active' OR student_details.status = 'inactive' ORDER BY student_details.priority ASC";
     $result = $conn->query($sql2);
     ?>
-    <thead>
+    <thead class="dblur">
         <tr>
           
-          <th scope="col " style="text-align: center;">Registration Id</th>
+          <th scope="col " style="text-align: center;" class="dblur">Registration Id</th>
           <th scope="col ">Name</th>
           <th scope="col " style="text-align: center;">Class</th>
           <th scope="col " style="text-align: center;">Age</th>
@@ -747,6 +571,7 @@ mysqli_free_result($result);
           <th scope="col " style="text-align: center;">Gender</th>
           <th scope="col " style="text-align: center;">Action</th>
           <th scope="col " style="text-align: center;">Image</th>
+          <th scope="col " style="text-align: center;">Gallery</th>
           <th scope="col " style="text-align: center;">Status</th>
           <th scope="col " style="text-align: center;">Priority</th>
         </tr>
@@ -764,32 +589,37 @@ mysqli_free_result($result);
         echo "<tr>";
         $priority = $row['priority'];
         echo "<td class='text-center'>" . $row["register_id"]. "</td>";
-        echo "<td >" . $row["name"]. "</td>";
-        echo "<td class='text-center'>" . $row["class"]. "</td>";
+        echo "<td >" . ucfirst($row["name"]). "</td>";
+        echo "<td class='text-center'>" . ucfirst($row["class"]). "</td>";
         echo "<td class='text-center'>" . $row["age"]. "</td>";
-        echo "<td class='text-center'>" . $row["dob"]. "</td>";
-        echo "<td class='text-center'>" . $row['gender']. "</td>";
+        echo "<td class='text-center'>" . date('jS M Y', strtotime($row["dob"])). "</td>";
+        echo "<td class='text-center'>" . ucfirst($row['gender']). "</td>";
         
         $p= $row['priority'];
-        //echo "<td><a href='$self?action=update&id=$id' class='btn btn-success'>update</a> <a href='$self?action=delete&id=$id' class='btn btn-danger'>delete</a></td>";
-            echo "<td  class='text-center'>
-            <a href='$self?action=update&id=$id' class='btn btn-success'>Edit Student</a>
-            <a href='$self?action=delete&id=$id' class='btn btn-danger' onclick=\"return confirm('Are you sure you want to delete this student?');\">Delete Student</a></td>";
+        $name= $row['name'];
+        
+        echo "<td  class='text-center'>
+            <a href='$self?action=update&id=$id' class=''><img src='edit.png' style='width:20px;height:auto;' ></a>
+            <div style='display:inline-block; width:10px;'></div>
+            <a href='#' class='' onclick='confirmDelete(\"$id\")'><img src='delete.png' style='width:20px;height:auto;' ></a>
+        </td>";
             $path =$row['photo'];
             // echo "<td><a href=''><img src='$path' style='width:50px;height:auto;'></a></td>";
             echo "<td class='text-center'><a href='#' class='' data-toggle='modal' id='btnid' onclick='passMessage(\"$path\")'><img src='witness.png' style= 'width:20px;height:auto;' ></a></td>";
+            echo "<td class='text-center'><a href='$self?action=gallery&id=$id&name=$name'   ><img src='gallery.png' style= 'width:20px;height:auto;' ></a></td>";
             $i = $row['id'];
             $checked = ($row['status'] == 'active') ? 'checked' : '';
             echo "<td class='text-center'><input class='input-switch' type='checkbox' id='$i' $checked>
               <label class='label-switch' for='$i'></label>
               <span class='info-text'></span></td>";
+            
             if($p == 1) {
-              echo "<td  class='text-center'><a href='$self?action=down&p=$p&id=$id'><img src='download.png' style='width:20px;height:auto;' ></a></td>";
+              echo "<td  class='text-center'><a href='#' onclick='changePriority(\"down\", $p, $id)'><img src='download.png' style='width:20px;height:auto;' ></a></td>";
             } elseif($p == $result->num_rows) {
-              echo "<td  class='text-center'><a href='$self?action=up&p=$p&id=$id'><img src='up-arrow.png' style= 'width:20px;height:auto;' ></a></td>";
-            }else{
-              echo "<td  class='text-center'><a href='$self?action=up&p=$p&id=$id'><img src='up-arrow.png' style= 'width:20px;height:auto;' ></a>
-              <a href='$self?action=down&p=$p&id=$id'><img src='download.png' style='width:20px;height:auto;' ></a></td>";
+              echo "<td  class='text-center'><a href='#' onclick='changePriority(\"up\", $p, $id)'><img src='up-arrow.png' style= 'width:20px;height:auto;' ></a></td>";
+            } else {
+              echo "<td  class='text-center'><a href='#' onclick='changePriority(\"up\", $p, $id)'><img src='up-arrow.png' style= 'width:20px;height:auto;' ></a>
+              <a href='#' onclick='changePriority(\"down\", $p, $id)'><img src='download.png' style='width:20px;height:auto;' ></a></td>";
             }
             echo "</tr>";
       }
@@ -812,6 +642,7 @@ mysqli_free_result($result);
   </div>
   <?php
   if (isset($_GET['action']) && ($_GET['action'] == 'up' || $_GET['action'] == 'down')) {
+    
     $priority = (int)$_GET['p'];
     $id = (int)$_GET['id'];
     $new_priority = ($_GET['action'] == 'up') ? $priority - 1 : $priority + 1;
@@ -822,7 +653,7 @@ mysqli_free_result($result);
 
     $sql = "UPDATE student_details SET priority = $priority WHERE priority = $new_priority AND id != $id";
     $conn->query($sql);
-
+    echo "<script></script>";
     echo "<script>window.location.href = 'view.php';</script>";
     
   }
@@ -842,99 +673,8 @@ mysqli_free_result($result);
  
   ?>
 
-  <script>
-$(document).ready(function() {
-    $('.input-switch').click(function() {
-        var id = $(this).attr('id');  // Get the ID of the checkbox
-        var status = $(this).prop('checked');  // Check if it is checked or not
-        status = (status == true) ? 'active' : 'inactive';  // Set the status accordingly
-        $.ajax({  
-    type: 'GET',  
-    url: 'view.php', 
-    data: { action: 'updatestatus', id: id, status: status },
-    success: function(response) {
-        console.log(status);
-        console.log(id);
-        console.log('updatestatus');
-        alert('Status updated successfully');
-    }
-});
-});
-});
 
-
-
-  
-      $(document).ready(function(){
-        $('.close').click(function(){
-          $("#myModal").css({"display": "none"});
- 
-        });
-      });
- 
-      function passMessage(imagePath) {
-        // Set the content of the modal body
-        // $('#btnid').('show');
-        // const btnDiv = document.getElementById('btnid');
-       
-       
-       $("#myModal").css({"display": "block"});
-       const path =imagePath;
-      $('#modalBody').html('<img src="' + path + '" width="400px"  alt="Student Photo" class="img-fluid">');
- 
- 
- 
- 
- 
-        console.log('Testing Div - ', JSON.stringify(imagePath));
-        // $('#modalBody').text('$path');
-      }
-    </script>
-
-    <script>
-          function validate() {
-        var name = document.getElementById('name').value;
-        var age = document.getElementById('age').value;
-        var class_id = document.getElementById('class_id').value;
-        var dob = document.getElementById('dob').value;
-        var gender = document.getElementById('gender').value;
-
-        var namePattern = /^[a-zA-Z\s]+$/;
-        var datePattern = /^\d{4}-\d{2}-\d{2}$/;
-
-        if (!name || !namePattern.test(name)) {
-            alert('Please enter a valid name without special characters.');
-            return false;
-        }
-
-        if (!age) {
-            alert("Please enter a valid age");
-            return false;
-        }
-
-        if (!class_id) {
-            alert("Please select a class");
-            return false;
-        }
-
-        if (!dob || !datePattern.test(dob)) {
-            alert('Please enter a valid date in the format YYYY-MM-DD.');
-            return false;
-        }
-
-        if (gender === '') {
-            alert('Please select a gender.');
-            return false;
-        }
-
-        return true;
-    }
-
-
-
-    </script>
-<!-- 
-  <script src="js/modal"></script> -->
+  <script src="js/modal.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
