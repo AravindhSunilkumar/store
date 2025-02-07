@@ -13,17 +13,16 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
         
         
         $target_dir = "students_images/";
-        $random_number = rand(1000, 9999);
-        $target_file = $target_dir . $random_number . '_' . basename($_FILES["file"]["name"]);
+        $target_file = $target_dir . basename($_FILES["file"]["name"]);
         
         $uploadOk = 1;
         $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
 
-        
+        // Check if image file is a actual image or fake image
         if (isset($_POST["submit"])) {
             $check = getimagesize($_FILES["file"]["tmp_name"]);
             if ($check !== false) {
-            // echo "File is an image - " . $check["mime"] . "";
+            echo "File is an image - " . $check["mime"] . "";
             $uploadOk = 1;
             } else {
             echo "<script>alert('File is not an image.');</script>";
@@ -31,29 +30,29 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
             }
         }
 
-        
+        // Check if file already exists
         if (file_exists($target_file)) {
             echo "<script>alert('Sorry, file already exists.');</script>";
             $uploadOk = 0;
         }
 
-        
+        // Check file size
         if ($_FILES["file"]["size"] > 100000000) { // 100000000 bytes is approximately 100 MB
             echo "<script>alert('Sorry, your file is too large.');</script>";
             $uploadOk = 0;
         }
 
-        
+        // Allow certain file formats
         if ($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg"
             && $imageFileType != "gif") {
             echo "<script>alert('Sorry, only JPG, JPEG, PNG & GIF files are allowed.');</script>";
             $uploadOk = 0;
         }
 
-        
+        // Check if $uploadOk is set to 0 by an error
         if ($uploadOk == 0) {
             echo "<script>alert('Sorry, your file was not uploaded.');</script>";
-        
+        // if everything is ok, try to upload file
         } else {
             if (move_uploaded_file($_FILES["file"]["tmp_name"], $target_file)) {
             // echo "<script>alert('The file " . htmlspecialchars(basename($_FILES["file"]["name"])) . " has been uploaded.');</script>";
@@ -62,62 +61,42 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
             }
         }
         
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
       
         $name = $_POST['name'];
         $age = $_POST['age'];
         $gender = $_POST['gender'];
         $class = $_POST['class'];
         $student_id = $_POST['student_id'];
-        $date = $_POST['date'];
         $sql2 = "SELECT * FROM student_details ORDER BY priority DESC LIMIT 1";
         $result2 = $conn->query($sql2);
         
         if ($result2 && $result2->num_rows > 0) {
             $data = $result2->fetch_assoc();
             $priority = $data['priority'] + 1;
-            
+            echo "p ok";
             
         } else {
             $priority = 1; // Default priority if no records found
         }
 
-        
-            $sql = "insert into student_details(name,class_id,age,gender,priority,photo,register_id,dob) values ('$name','$class','$age','$gender','$priority','$target_file','$student_id','$date')";
+        echo "it ok";
+            $sql = "insert into student_details(name,class_id,age,gender,priority,photo,reg_id) values ('$name','$class','$age','$gender','$priority','$target_file','$student_id')";
             if($conn->query($sql) == TRUE){
-                $last_id = $conn->insert_id;
-                if (isset($_FILES['gallery'])) {
-                    $gallery = $_FILES['gallery'];
-                
-
-                $total = count($_FILES['gallery']['name']);
-
-                    // Loop through each file
-                    for( $i=0 ; $i < $total ; $i++ ) {
-
-                    //Get the temp file path
-                    $tmpFilePath = $_FILES['gallery']['tmp_name'][$i];
-
-                    //Make sure we have a file path
-                    if ($tmpFilePath != ""){
-                        //Setup our new file path
-                        $random = rand(1000, 9999);
-                        $newFilePath = "students_images/".$random."_" . $_FILES['gallery']['name'][$i];
-
-                        //Upload the file into the temp dir
-                        if(move_uploaded_file($tmpFilePath, $newFilePath)) {
-                            $gsql = "insert into student_gallery(student_id,gallery_photo) values ('$last_id','$newFilePath')";
-                            if($conn->query($gsql) == TRUE){
-                            }else{
-                                echo $conn->error;
-
-                        
-
-                        }
-                        $newFilePath = "";
-                    }
-                    }
-                }
-            }
                 echo "<script>
                 alert('successfull');window.location.href = 'view.php';
             </script>";
@@ -180,7 +159,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
     </li>
     
     <li class="nav-item">
-        <a class="nav-link  btn btn-warning" href="form.php">Add Student</a>
+        <a class="nav-link btn btn-warning" href="form.php">Add Student</a>
     </li>
     <li class="nav-item">
         <a class="nav-link " aria-disabled="true"></a>
@@ -190,30 +169,31 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
 
 <div class="container ">
     <center><h3>Register</h3></center>
-    <form action="<?php echo $_SERVER["PHP_SELF"]; ?>" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
+    <form action="<?php echo $_SERVER["PHP_SELF"]; ?>" method="post" enctype="multipart/form-data">
        <?php
        
        $sql3 = "SELECT * FROM student_details ORDER BY id DESC LIMIT 1";
         $result3 = $conn->query($sql3);
         $row3 = $result3->fetch_assoc();
-        $register_id = str_pad($row3['register_id'] + 1, 4, '0', STR_PAD_LEFT);
+        $reg_id = str_pad($row3['register_id'] + 1, 4, '0', STR_PAD_LEFT);
 ?>
     <div class="mb-3">
-            <label for="student_id" class="form-label">Student Id :</label>
-            <input type="text" name="student_id" class="form-control" id="student_id" value="<?php echo $register_id; ?>" readonly>
+            <label for="student_id" class="form-label">Registration Id</label>
+            <input type="text" name="student_id" class="form-control" id="student_id" value = "<?php echo $reg_id;?>" required>
         </div>    
     <div class="mb-3">
-            <label for="name" class="form-label"><span class="text-danger">*</span>Name :</label>
-            <input type="text" name="name" class="form-control" id="name">
+            <label for="name" class="form-label"><span class="text-danger">*</span>Name</label>
+            <input type="text" name="name" class="form-control" id="name" required>
         </div>
         <div class="mb-3">
-            <label for="class"><span class="text-danger">*</span>Class :</label>
+            <label for="class"><span class="text-danger">*</span>Class</label>
             <div class="dropdown">
             <select class="form-select" name="class" aria-label="Default select example">
                 <?php
-                echo "<option value='' selected>Select a class</option>";
                 $sql = "SELECT * FROM class_details WHERE status = 'active'";
                 $classes = $conn->query($sql);
+                
+                // echo "<option value='' disabled selected>Select a class</option>";
                 
                 while($row = $classes->fetch_assoc()){
                     echo "<option value=".$row['id'].">".$row['class']."</option>";
@@ -223,36 +203,25 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
             </div>
         </div>
         <div class="mb-3">
-            <label for="age" class="form-label"><span class="text-danger">*</span>Age :</label>
-            <input type="number" name="age" class="form-control" id="age">
+            <label for="age" class="form-label"><span class="text-danger">*</span>Age</label>
+            <input type="number" name="age" class="form-control" id="age" required>
         </div>
         <div class="mb-3">
-            <label for="date" class="form-label"><span class="text-danger">*</span>Date of Birth :</label>
-            <input type="date" name="date" class="form-control" id="date">
+            <label for="file" class="form-label"><span class="text-danger">*</span>Image</label>
+            <input type="file" name="file" class="form-control" id="file" required>
         </div>
         <div class="mb-3">
-            <label for="file" class="form-label"><span class="text-danger">*</span>Image :</label>
-            <input type="file" name="file" class="form-control" id="file">
-            <span class="text-danger"><i>*Hint:Uploading file must be jpg,png,jpeg or gif</i></span>
-        </div>
-        <div class="mb-3">
-            <label for="file" class="form-label">Gallery :</label>
-            <input type="file" name="gallery[]" multiple="multiple" class="form-control" id="gallery">
-            <span class="text-danger"><i>*Hint:Uploading file must be jpg,png,jpeg or gif</i></span>
-        </div>
-        <div class="mb-3">
-        
-            <label for="gender" class="form-label"><span class="text-danger">*</span>Gender :</label>
+            <label for="gender" class="form-label"><span class="text-danger">*</span>Gender</label><br>
             <div class="form-check form-check-inline">
-                <input type="radio" name="gender" class="form-check-input" id="male" value="male">
+                <input type="radio" name="gender" class="form-check-input" id="male" value="male" required>
                 <label class="form-check-label" for="male">Male</label>
             </div>
             <div class="form-check form-check-inline">
-                <input type="radio" name="gender" class="form-check-input" id="female" value="female">
+                <input type="radio" name="gender" class="form-check-input" id="female" value="female" required>
                 <label class="form-check-label" for="female">Female</label>
             </div>
             <div class="form-check form-check-inline">
-                <input type="radio" name="gender" class="form-check-input" id="other" value="other">
+                <input type="radio" name="gender" class="form-check-input" id="other" value="other" required>
                 <label class="form-check-label" for="other">Other</label>
             </div>
         </div>
@@ -260,62 +229,6 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
     </form>
 </div>
 
-<script>
-    function validateForm() {
-        var name = document.getElementById('name').value;
-        var age = document.getElementById('age').value;
-        var date = document.getElementById('date').value;
-        var file = document.getElementById('file').value;
-        var gender = document.querySelector('input[name="gender"]:checked');
-        var classSelect = document.querySelector('select[name="class"]').value;
-
-        var namePattern = /^[a-zA-Z\s]+$/;
-
-        if (!name || !namePattern.test(name)) {
-            alert('Please enter a valid name without special characters.');
-            return false;
-        }
-
-        if (!classSelect) {
-            alert('Please select a class.');
-            return false;
-        }
-
-        if (!age) {
-            alert('Please enter age.');
-            return false;
-        }
-
-        if (!date) {
-            alert('Please enter date of birth.');
-            return false;
-        }
-
-        var datePattern = /^\d{4}-\d{2}-\d{2}$/;
-        if (!datePattern.test(date)) {
-            alert('Please enter a valid date in the format DD-MM-YYYY.');
-            return false;
-        }
-
-        var dateObj = new Date(date);
-        if (isNaN(dateObj.getTime())) {
-            alert('Please enter a valid date.');
-            return false;
-        }
-
-        if (!file) {
-            alert('Please upload an image.');
-            return false;
-        }
-
-        if (!gender) {
-            alert('Please select a gender.');
-            return false;
-        }
-
-        return true;
-    }
-</script>
 
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
