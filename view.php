@@ -401,30 +401,39 @@ mysqli_free_result($result);
   //Gallery view----==================================================Gallery view================================Gallery view================================Gallery view===============================================================
   $id = $_GET['id'];
   $name = $_GET['name'];
-  $sql = "SELECT student_gallery.gallery_photo, student_details.name FROM student_gallery INNER JOIN student_details ON student_gallery.student_id = student_details.id WHERE student_gallery.student_id = '$id'";
+  $sql = "SELECT student_gallery.gallery_photo, student_details.name,student_details.register_id, student_details.age, student_details.gender, class_details.class, student_details.dob FROM student_gallery INNER JOIN student_details ON student_gallery.student_id = student_details.id INNER JOIN class_details ON student_details.class_id = class_details.id WHERE student_gallery.student_id = '$id'";
   $result = $conn->query($sql);
   if($result->num_rows > 0){
+    $studentDetails = $result->fetch_assoc();
     ?>
     <div class="container border shadow">
+    <div class="row col-12 text-center">
+            <h2>Student Details</h2>
+          </div>
+          <hr><hr>
+          <div class="row col-12 ">
+            <strong><p>Registration ID : <?php echo ucfirst($studentDetails['register_id']);?> </p></strong>
+            <strong><p>Student Name : <?php echo ucfirst($studentDetails['name']);?> </p></strong>
+            <strong><p>Age : <?php echo $studentDetails['age'];?> </p></strong>
+            <strong><p>Gender : <?php echo ucfirst($studentDetails['gender']);?> </p></strong>
+            <strong><p>Class : <?php echo ucfirst($studentDetails['class']);?> </p></strong>
+            <strong><p>Date of Birth : <?php echo date('jS M Y', strtotime($studentDetails['dob']));?> </p></strong>
+          </div>
+          <hr><hr>
           <div class="row col-12 text-center">
             <h2>Gallery</h2>
           </div>
           <hr><hr>
-          <div class="row col-12 text-center">
-            <strong><p>Name : <?php echo ucfirst($name);?> </p></strong>
-          </div>
-          
-          
           <div class="row mt-4">
     <?php
     
-    while($row=$result->fetch_assoc()){
+    do {
       ?>
       
           
             <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
               <div class="card" style="width: 100%;">
-                <img class="card-img-top" src="<?php echo $row['gallery_photo'] ?>" alt="Card image cap">
+                <img class="card-img-top" src="<?php echo $studentDetails['gallery_photo'] ?>" alt="Card image cap">
               </div>
             </div>
             
@@ -432,7 +441,7 @@ mysqli_free_result($result);
       
       
       
-      <?php } ?> 
+      <?php } while($studentDetails = $result->fetch_assoc()); ?> 
         </div>
       </div>
       <?php
@@ -442,41 +451,33 @@ mysqli_free_result($result);
   //students view----==================================================students view================================students view================================students view===============================================================
   ?>
   <div class="row col-12 d-flex text-align-center ">
-    <div class="row col-6">
+    <div class="row col-12">
       <h2>Search Students</h2>
-      <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method="get">
-      <div class="col-8 d-flex">
-          <select class="form-select" name="id" aria-label="Default select example">
-                        <?php
-                        $sql = "SELECT * FROM class_details WHERE status = 'active'";
-                        $classes = $conn->query($sql);
-                        echo "<option value='default'  selected>Select a class</option>";
-                        while($row = $classes->fetch_assoc()){
-                            
-                          if(isset($_GET['filter']) && $_GET['id'] == $row['id']){
-                            echo "<option selected>".$row['class']."</option>";
-          
-                          }else{
-                            echo "<option value=".$row['id'].">".$row['class']."</option>";
-                        }
-                      }
-                        
-                        ?>
-          </select>
-          <input type="submit" value="Filter" name="filter" class="btn btn-primary ms-2">
-          <a href="view.php"  class="btn btn-warning ms-2">Clear</a>
+      <div class="col-12">
+        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method="get">
+          <div class="col-8 d-flex">
+            <select class="form-select me-2" name="id" aria-label="Default select example">
+              <?php
+              $sql = "SELECT * FROM class_details WHERE status = 'active'";
+              $classes = $conn->query($sql);
+              echo "<option value='default' selected>Select a class</option>";
+              while($row = $classes->fetch_assoc()){
+                if(isset($_GET['filter']) && $_GET['id'] == $row['id']){
+                  echo "<option selected>".$row['class']."</option>";
+                } else {
+                  echo "<option value=".$row['id'].">".$row['class']."</option>";
+                }
+              }
+              ?>
+            </select>
+            <input type="text" name="studentname" id="student_name" value="<?php echo (isset($_GET['studentname'])) ? $_GET['studentname'] : ''; ?>" class="form-control me-2" placeholder="Enter a Name">
+            <input type="text" name="registerid" id="registerid" value="<?php echo (isset($_GET['registerid'])) ? $_GET['registerid'] : ''; ?>" class="form-control me-2" placeholder="Enter a register ID">
+            <input type="submit" value="Filter" name="filter" class="btn btn-primary me-2">
+            <a href="view.php" class="btn btn-warning">Clear</a>
+          </div>
+        </form>
       </div>
-      </form>
     </div>
-    <!-- <input type="text" name="studentname" id="student_name"> -->
-    
-  </div>
-  </form>
-    </div>
-      
-    
-  </div>
- 
   </div>
   <div class="container dblur">
   <table class="table table-primary dblur">
@@ -510,12 +511,48 @@ mysqli_free_result($result);
       </thead>
       <tbody>
     <?php
-    if($c_id == 'default'){
-    $sql = "SELECT student_details.id,student_details.name,student_details.age,student_details.gender,class_details.class,student_details.priority,student_details.photo, student_details.register_id,student_details.status,student_details.dob FROM student_details INNER JOIN class_details ON student_details.class_id = class_details.id WHERE student_details.status = 'active' OR student_details.status = 'inactive' ORDER BY student_details.priority ASC";
+    $c_id = isset($_GET['id']) && $_GET['id'] !== 'default' ? $conn->real_escape_string($_GET['id']) : '';
+    $studentname = isset($_GET['studentname']) ? $conn->real_escape_string($_GET['studentname']) : '';
+    $registerid = isset($_GET['registerid']) ? $conn->real_escape_string($_GET['registerid']) : '';
 
-    }else{
-    $sql = "SELECT student_details.id,student_details.name,student_details.age,student_details.gender,class_details.class,student_details.priority,student_details.photo, student_details.register_id,student_details.status,student_details.dob FROM student_details INNER JOIN class_details ON student_details.class_id = class_details.id WHERE class_id = '$c_id' AND  student_details.status = 'active' OR student_details.status = 'inactive' ORDER BY student_details.priority ASC";
+    // Base query
+    $sql = "SELECT 
+                student_details.id,
+                student_details.name,
+                student_details.age,
+                student_details.gender,
+                class_details.class,
+                student_details.priority,
+                student_details.photo,
+                student_details.register_id,
+                student_details.status,
+                student_details.dob 
+            FROM student_details 
+            INNER JOIN class_details ON student_details.class_id = class_details.id 
+            WHERE (student_details.status = 'active' OR student_details.status = 'inactive')";
+
+    // Filter conditions
+    $conditions = [];
+
+    if ($c_id !== '') {
+        $conditions[] = "student_details.class_id = '$c_id'";
     }
+
+    if (!empty($studentname)) {
+        $conditions[] = "student_details.name LIKE '%$studentname%'";
+    }
+
+    if (!empty($registerid)) {
+        $conditions[] = "student_details.register_id = '$registerid'";
+    }
+
+    // Add conditions to the query if any exist
+    if (count($conditions) > 0) {
+        $sql .= " AND " . implode(" AND ", $conditions);
+    }
+
+    // Order the results by priority
+    $sql .= " ORDER BY student_details.priority ASC";
     $result = $conn->query($sql);
     if ($result->num_rows > 0) {
       while($row = $result->fetch_assoc()) {
@@ -552,7 +589,7 @@ mysqli_free_result($result);
       }
       mysqli_free_result($result);
       } else {
-      echo "<td colspan='6' class='text-center'>0 results</td>";
+      echo "<td colspan='10' class='text-center'>0 results</td>";
       }
       
 
