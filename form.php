@@ -3,100 +3,113 @@ require_once 'connection.php';
 ?>
 <?php
 
-
-
-
 if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
     // print_r($_REQUEST);die;
     
     if ((!empty($_POST['name'])) && (!empty($_POST['age'])) && (!empty($_POST['gender']) && (!empty($_POST['class'])) )) {
         
         
-        $target_dir = "students_images/";
-        $target_file = $target_dir . basename($_FILES["file"]["name"]);
-        
-        $uploadOk = 1;
-        $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
-
-        // Check if image file is a actual image or fake image
-        if (isset($_POST["submit"])) {
-            $check = getimagesize($_FILES["file"]["tmp_name"]);
+        function uploadImage($file) {
+            $target_dir = "students_images/";
+            $random_string = rand(1000,9999); 
+            $target_file = $target_dir . $random_string . '_' . basename($file["name"]);
+            
+            $uploadOk = 1;
+            $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+            $check = getimagesize($file["tmp_name"]);
             if ($check !== false) {
-            echo "File is an image - " . $check["mime"] . "";
+            // echo "File is an image - " . $check["mime"] . "";
             $uploadOk = 1;
             } else {
-            echo "<script>alert('File is not an image.');</script>";
+            $message =  "<script>alert('File is not an image.');</script>";
             $uploadOk = 0;
             }
-        }
-
-        // Check if file already exists
-        if (file_exists($target_file)) {
-            echo "<script>alert('Sorry, file already exists.');</script>";
+            if (file_exists($target_file)) {
+            $message = "<script>alert('Sorry, file already exists.');</script>";
             $uploadOk = 0;
-        }
+            }
 
-        // Check file size
-        if ($_FILES["file"]["size"] > 100000000) { // 100000000 bytes is approximately 100 MB
-            echo "<script>alert('Sorry, your file is too large.');</script>";
+            
+            if ($file["size"] > 5000000) { //5mb
+            $message = "<script>alert('Sorry, your file is too large.');</script>";
             $uploadOk = 0;
-        }
+            }
 
-        // Allow certain file formats
-        if ($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg"
+            // Allow certain file formats
+            if ($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg"
             && $imageFileType != "gif") {
-            echo "<script>alert('Sorry, only JPG, JPEG, PNG & GIF files are allowed.');</script>";
+            $message =  "<script>alert('Sorry, only JPG, JPEG, PNG & GIF files are allowed.');</script>";
             $uploadOk = 0;
-        }
+            }
 
-        // Check if $uploadOk is set to 0 by an error
-        if ($uploadOk == 0) {
-            echo "<script>alert('Sorry, your file was not uploaded.');</script>";
-        // if everything is ok, try to upload file
-        } else {
-            if (move_uploaded_file($_FILES["file"]["tmp_name"], $target_file)) {
-            // echo "<script>alert('The file " . htmlspecialchars(basename($_FILES["file"]["name"])) . " has been uploaded.');</script>";
+            // Check if $uploadOk is set to 0 by an error
+            if ($uploadOk == 0) {
+            echo $message;
+            return false;
+            
             } else {
-            echo "<script>alert('Sorry, there was an error uploading your file.');</script>";
+            if (move_uploaded_file($file["tmp_name"], $target_file)) {
+                return $target_file;
+            } else {
+                echo "<script>alert('Sorry, there was an error uploading your file.');</script>";
+                return false;
+            }
             }
         }
+
+        $target_file = uploadImage($_FILES["file"]);
+        if ($target_file === false) {
+            // Handle the error appropriately
+            echo $message;
+                  echo "<script>window.location.href = 'form.php';</script>";
+                  return;
+            exit;
+        }
         
         
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-      
-        $name = $_POST['name'];
-        $age = $_POST['age'];
-        $gender = $_POST['gender'];
-        $class = $_POST['class'];
-        $student_id = $_POST['student_id'];
+        $name = $conn->real_escape_string((string)$_POST['name']);
+        $age = $conn->real_escape_string($_POST['age']);
+        $gender = $conn->real_escape_string($_POST['gender']);
+        $class = $conn->real_escape_string($_POST['class']);
+        $student_id = $conn->real_escape_string($_POST['student_id']);
+        $dob = $conn->real_escape_string($_POST['dob']);
         $sql2 = "SELECT * FROM student_details ORDER BY priority DESC LIMIT 1";
         $result2 = $conn->query($sql2);
         
         if ($result2 && $result2->num_rows > 0) {
             $data = $result2->fetch_assoc();
             $priority = $data['priority'] + 1;
-            echo "p ok";
+            // echo "p ok";
             
         } else {
             $priority = 1; // Default priority if no records found
         }
 
-        echo "it ok";
-            $sql = "insert into student_details(name,class_id,age,gender,priority,photo,reg_id) values ('$name','$class','$age','$gender','$priority','$target_file','$student_id')";
-            if($conn->query($sql) == TRUE){
+        // echo "it ok";
+            $sql = "INSERT INTO student_details(name, class_id, age, gender, priority, photo, register_id,dob) VALUES ('$name', '$class', '$age', '$gender', '$priority', '$target_file', '$student_id','$dob')";
+            if ($conn->query($sql) === TRUE) {
+                $last_id = $conn->insert_id;
+                if (!empty($_FILES['files']['name'][0])) {
+                    foreach ($_FILES['files']['name'] as $key => $value) {
+                        $file = array(
+                            'name' => $_FILES['files']['name'][$key],
+                            'type' => $_FILES['files']['type'][$key],
+                            'tmp_name' => $_FILES['files']['tmp_name'][$key],
+                            'error' => $_FILES['files']['error'][$key],
+                            'size' => $_FILES['files']['size'][$key]
+                        );
+                        $gallery_file = uploadImage($file);
+                        if ($gallery_file !== false) {
+                            $sql_gallery = "INSERT INTO student_gallery(student_id, gallery_photo) VALUES ('$last_id', '$gallery_file')";
+                            if ($conn->query($sql_gallery) !== TRUE) {
+                                echo $conn->error;
+                            }
+                        }
+                    }
+                }
                 echo "<script>
                 alert('successfull');window.location.href = 'view.php';
             </script>";
@@ -113,6 +126,15 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
             alert('Data is missing');
         </script>";
     }
+}
+?>
+<?php
+if($_SERVER['REQUEST_METHOD'] == 'GET' and (isset($_GET['dob']))){
+    $dob =$_GET['dob'];
+
+    header('Content-Type: application/json');
+    echo json_encode(array("status" => "$dob"));
+    exit;
 }
 ?>
 <!DOCTYPE html>
@@ -155,7 +177,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
     <!-- nav -->
     <ul class="nav justify-content-center">
     <li class="nav-item">
-        <a class="nav-link active btn btn-warning" aria-current="page" href="view.php">Main Page</a>
+        <a class="nav-link active btn btn-warning" aria-current="page" href="view.php">Home</a>
     </li>
     
     <li class="nav-item">
@@ -164,70 +186,175 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
     <li class="nav-item">
         <a class="nav-link " aria-disabled="true"></a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link btn btn-warning" href="class_insert.php">Add Class</a>
+    </li>
     </ul>
     <!-- nav  end-->
 
-<div class="container ">
-    <center><h3>Register</h3></center>
-    <form action="<?php echo $_SERVER["PHP_SELF"]; ?>" method="post" enctype="multipart/form-data">
-       <?php
-       
-       $sql3 = "SELECT * FROM student_details ORDER BY id DESC LIMIT 1";
-        $result3 = $conn->query($sql3);
-        $row3 = $result3->fetch_assoc();
-        $reg_id = str_pad($row3['register_id'] + 1, 4, '0', STR_PAD_LEFT);
-?>
-    <div class="mb-3">
-            <label for="student_id" class="form-label">Registration Id</label>
-            <input type="text" name="student_id" class="form-control" id="student_id" value = "<?php echo $reg_id;?>" required>
-        </div>    
-    <div class="mb-3">
-            <label for="name" class="form-label"><span class="text-danger">*</span>Name</label>
-            <input type="text" name="name" class="form-control" id="name" required>
+<div class="container  ">
+    <center><h3>Student Registration</h3></center>
+    <form action="<?php echo $_SERVER["PHP_SELF"]; ?>" method="post" enctype="multipart/form-data" onsubmit="return validate()">
+        <?php
+        
+        $sql3 = "SELECT * FROM student_details ORDER BY id DESC LIMIT 1";
+         $result3 = $conn->query($sql3);
+         $row3 = $result3->fetch_assoc();
+         $reg_id = str_pad($row3['register_id'] + 1, 4, '0', STR_PAD_LEFT);
+    ?>
+    <div class="row">
+        <div class="col-12 col-md-6">
+            <div class="mb-3">
+                <label for="student_id" class="form-label">Registration Id</label>
+                <input type="text" name="student_id" class="form-control" id="student_id" value = "<?php echo $reg_id;?>" required readonly>
+            </div>    
+            
         </div>
-        <div class="mb-3">
-            <label for="class"><span class="text-danger">*</span>Class</label>
-            <div class="dropdown">
-            <select class="form-select" name="class" aria-label="Default select example">
-                <?php
-                $sql = "SELECT * FROM class_details WHERE status = 'active'";
-                $classes = $conn->query($sql);
-                
-                // echo "<option value='' disabled selected>Select a class</option>";
-                
-                while($row = $classes->fetch_assoc()){
-                    echo "<option value=".$row['id'].">".$row['class']."</option>";
-                }
-                ?>
-            </select>
+        <div class="col-12 col-md-6">
+            <div class="mb-3">
+                <label for="name" class="form-label"><span class="text-danger">*</span>Name</label>
+                <input type="text" name="name" class="form-control" id="name" required>
             </div>
         </div>
-        <div class="mb-3">
-            <label for="age" class="form-label"><span class="text-danger">*</span>Age</label>
-            <input type="number" name="age" class="form-control" id="age" required>
-        </div>
-        <div class="mb-3">
-            <label for="file" class="form-label"><span class="text-danger">*</span>Image</label>
-            <input type="file" name="file" class="form-control" id="file" required>
-        </div>
-        <div class="mb-3">
-            <label for="gender" class="form-label"><span class="text-danger">*</span>Gender</label><br>
-            <div class="form-check form-check-inline">
-                <input type="radio" name="gender" class="form-check-input" id="male" value="male" required>
-                <label class="form-check-label" for="male">Male</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input type="radio" name="gender" class="form-check-input" id="female" value="female" required>
-                <label class="form-check-label" for="female">Female</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input type="radio" name="gender" class="form-check-input" id="other" value="other" required>
-                <label class="form-check-label" for="other">Other</label>
+
+    </div>
+    <div class="row">
+        <div class="col-12 col-md-6">
+            <div class="mb-3">
+                <label for="dob" class="form-label"><span class="text-danger">*</span>Dob</label>
+                <input type="date" name="dob" class="form-control" id="dob" onchange="dobCall(this.value)" required>
             </div>
         </div>
-        <input type="submit" name="submit" class="btn btn-primary" value="Register">
+        <div class="col-12 col-md-6">
+            <div class="mb-3">
+                <label for="age" class="form-label"><span class="text-danger">*</span>Age</label>
+                <input type="number" name="age" class="form-control" id="age" required>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 col-md-6">
+            <div class="mb-3">
+                <label for="class"><span class="text-danger">*</span>Class</label>
+                <div class="dropdown">
+                <select class="form-select" name="class" id="class_id" aria-label="Default select example" required>
+                        <?php
+                        $sql = "SELECT * FROM class_details WHERE status = 'active'";
+                        $classes = $conn->query($sql);
+                        
+                        // echo "<option value='' disabled selected>Select a class</option>";
+                        
+                        while($row = $classes->fetch_assoc()){
+                            echo "<option value=".$row['id'].">".$row['class']."</option>";
+                        }
+                        ?>
+                </select>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="mb-3">
+                <label for="file" class="form-label"><span class="text-danger">*</span>Image</label>
+                <input type="file" name="file" class="form-control" id="file" required>
+                    <span class="text-danger"><i>upload files png,jpg,jpeg.(5MB)</i></span>
+                        
+            </div>              
+        </div>
+    </div>
+    
+         
+         
+         
+         <div class="mb-3">
+              <label for="gender" class="form-label"><span class="text-danger">*</span>Gender</label>
+              <div class="form-check form-check-inline">
+                    <input type="radio" name="gender" class="form-check-input" id="male" value="male" required>
+                    <label class="form-check-label" for="male">Male</label>
+              </div>
+              <div class="form-check form-check-inline">
+                    <input type="radio" name="gender" class="form-check-input" id="female" value="female" required>
+                    <label class="form-check-label" for="female">Female</label>
+              </div>
+              <div class="form-check form-check-inline">
+                    <input type="radio" name="gender" class="form-check-input" id="other" value="other" required>
+                    <label class="form-check-label" for="other">Other</label>
+              </div>
+              <div class="mb-3">
+                    <label for="files" class="form-label">Gallery</label>
+                    <input type="file" class="form-control" name="files[]" id="files" multiple="multiple">
+                    <span class="text-danger"><i>upload files png,jpg,jpeg.(5MB)</i></span>
+
+              </div>
+              
+         </div>
+         <input type="submit" name="submit" class="btn btn-primary" value="Register">
     </form>
-</div>
+    </div>
+
+    <script>
+        function dobCall(val) {
+        const apiUrl = 'form.php?action=dobupdate&dob='+val;
+        const dob = val;
+
+        fetch(apiUrl)
+        .then(response => {
+            if (!response.ok) {
+            throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Display data in an HTML element
+            alert('ok');
+            // outputElement.textContent = JSON.stringify(data, null, 2);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+        }
+    function validate() {
+         const name = document.getElementById('name').value.trim();
+         const age = document.getElementById('age').value;
+         const dob = document.getElementById('dob').value;
+         const file = document.getElementById('file').value;
+         const gender = document.querySelector('input[name="gender"]:checked');
+         
+         if (name === '') {
+              alert('Name is required.');
+              return false;
+         }
+         
+         if (age === '' || age <= 0) {
+              alert('Please enter a valid age.');
+              return false;
+         }
+         
+         if (dob === '') {
+              alert('Date of birth is required.');
+              return false;
+         }
+         
+         const dobDate = new Date(dob);
+         const today = new Date();
+         
+         if (dobDate > today) {
+              alert('Enter a valid Date of birth.');
+              return false;
+         }
+         
+         if (file === '') {
+              alert('Image is required.');
+              return false;
+         }
+         
+         if (!gender) {
+              alert('Gender is required.');
+              return false;
+         }
+         
+         return true;
+    }
+    </script>
 
 
 
