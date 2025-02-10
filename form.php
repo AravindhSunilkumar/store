@@ -130,10 +130,23 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
 ?>
 <?php
 if($_SERVER['REQUEST_METHOD'] == 'GET' and (isset($_GET['dob']))){
-    $dob =$_GET['dob'];
+    $dob = $_GET['dob'];
+    $dobDate = new DateTime($dob);
+    $currentDate = new DateTime();
+    $age = $currentDate->diff($dobDate)->y;
+    $stmt = $conn->prepare("SELECT * FROM class_details WHERE age_from <= ? AND age_to >= ?");
+    $stmt->bind_param("ii", $age, $age);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $classes = array();
+    if($result->num_rows > 0){
+        while($row = $result->fetch_assoc()){
+            $classes[] = $row;
+        }
+    }
 
     header('Content-Type: application/json');
-    echo json_encode(array("status" => "$dob"));
+    echo json_encode(array("status" => "$age", "classes" => $classes));
     exit;
 }
 ?>
@@ -228,7 +241,7 @@ if($_SERVER['REQUEST_METHOD'] == 'GET' and (isset($_GET['dob']))){
         <div class="col-12 col-md-6">
             <div class="mb-3">
                 <label for="age" class="form-label"><span class="text-danger">*</span>Age</label>
-                <input type="number" name="age" class="form-control" id="age" required>
+                <input type="number" name="age" class="form-control" id="age" required readonly>
             </div>
         </div>
     </div>
@@ -238,16 +251,7 @@ if($_SERVER['REQUEST_METHOD'] == 'GET' and (isset($_GET['dob']))){
                 <label for="class"><span class="text-danger">*</span>Class</label>
                 <div class="dropdown">
                 <select class="form-select" name="class" id="class_id" aria-label="Default select example" required>
-                        <?php
-                        $sql = "SELECT * FROM class_details WHERE status = 'active'";
-                        $classes = $conn->query($sql);
-                        
-                        // echo "<option value='' disabled selected>Select a class</option>";
-                        
-                        while($row = $classes->fetch_assoc()){
-                            echo "<option value=".$row['id'].">".$row['class']."</option>";
-                        }
-                        ?>
+                    <option value=""></option>       
                 </select>
                 </div>
             </div>
@@ -293,25 +297,39 @@ if($_SERVER['REQUEST_METHOD'] == 'GET' and (isset($_GET['dob']))){
 
     <script>
         function dobCall(val) {
-        const apiUrl = 'form.php?action=dobupdate&dob='+val;
-        const dob = val;
+    const apiUrl = 'form.php?dob=' + val;
 
-        fetch(apiUrl)
+    fetch(apiUrl)
         .then(response => {
             if (!response.ok) {
-            throw new Error('Network response was not ok');
+                throw new Error('Network response was not ok');
             }
             return response.json();
         })
         .then(data => {
-            // Display data in an HTML element
-            alert('ok');
-            // outputElement.textContent = JSON.stringify(data, null, 2);
+            // Update the age field
+            document.getElementById("age").value = data.status;
+
+            // Get class select element
+            let classSelect = document.getElementById("class_id");
+            classSelect.innerHTML = '<option value="">Select Class</option>'; // Reset options
+
+            // Append new options from API response
+            data.classes.forEach(cls => {
+            let option = document.createElement("option");
+            option.value = cls.id;
+            option.textContent = cls.class;
+            classSelect.appendChild(option);
+            });
         })
         .catch(error => {
             console.error('Error:', error);
         });
-        }
+}
+
+    </script>
+    <script>
+
     function validate() {
          const name = document.getElementById('name').value.trim();
          const age = document.getElementById('age').value;
