@@ -48,11 +48,11 @@ if(($_SERVER['REQUEST_METHOD'] == 'POST') && (isset($_POST['supdate']))){
  
 
   $name = $age = $class = $gender = $id ='';
-  $name = $_POST['name'];
-  $age = $_POST['age'];
-  $class = $_POST['class_id'];
-  $gender = $_POST['gender'];
-  $date = $_POST['date'];
+  $name = $conn->real_escape_string($_POST['name']);
+  $age = $conn->real_escape_string($_POST['age']);
+  $class = $conn->real_escape_string($_POST['class_id']);
+  $gender = $conn->real_escape_string($_POST['gender']);
+  $date = $conn->real_escape_string($_POST['date']);
   if (isset($_POST['id'])) {
     $id = $_POST['id'];
   }
@@ -63,6 +63,7 @@ if(($_SERVER['REQUEST_METHOD'] == 'POST') && (isset($_POST['supdate']))){
 
         //file uploading 
         if(!empty($_FILES["file"]["name"])){
+              $message = '';
               $target_dir = "students_images/";
               $random_number = rand(1000, 9999);
               $target_file = $target_dir . $random_number . '_' . basename($_FILES["file"]["name"]);
@@ -78,33 +79,36 @@ if(($_SERVER['REQUEST_METHOD'] == 'POST') && (isset($_POST['supdate']))){
 
                   $uploadOk = 1;
                   } else {
-                  echo "<script>alert('File is not an image.');</script>";
+                  $message = "<script>alert('File is not an image.');</script>";
                   $uploadOk = 0;
                   }
               }
 
               // Check if file already exists
               if (file_exists($target_file)) {
-                  echo "<script>alert('Sorry, file already exists.');</script>";
+                  $message = "<script>alert('Sorry, file already exists.');</script>";
                   $uploadOk = 0;
               }
 
               // Check file size
-              if ($_FILES["file"]["size"] > 100000000) { // 100000000 bytes is approximately 100 MB
-                  echo "<script>alert('Sorry, your file is too large.');</script>";
+                if ($_FILES["file"]["size"] > 5000000) { // 5000000 bytes is approximately 5 MB
+                  $message = "<script>alert('Sorry, your file is too large.');</script>";
                   $uploadOk = 0;
               }
 
               // Allow certain file formats
               if ($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg"
                   && $imageFileType != "gif") {
-                  echo "<script>alert('Sorry, only JPG, JPEG, PNG & GIF files are allowed.');</script>";
+                  $message = "<script>alert('Sorry, only JPG, JPEG, PNG & GIF files are allowed.');</script>";
                   $uploadOk = 0;
               }
 
               // Check if $uploadOk is set to 0 by an error
-              if ($uploadOk == 0) {
-                  echo "<script>alert('Sorry, your file was not uploaded.');</script>";
+                if ($uploadOk == 0) {
+                  echo $message;
+                  echo "<script>window.location.href = 'view.php?action=update&id=$id';</script>";
+                  return;
+
               // if everything is ok, try to upload file
               } else {
                   if (move_uploaded_file($_FILES["file"]["tmp_name"], $target_file)) {
@@ -197,7 +201,7 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
   <!-- nav -->
   <ul class="nav justify-content-center">
     <li class="nav-item mt-2">
-        <a class="nav-link active btn btn-warning" aria-current="page"  href="view.php">Main Page</a>
+        <a class="nav-link active btn btn-warning" aria-current="page"  href="view.php">Home</a>
     </li>
     
     <li class="nav-item ml-2 mt-2">
@@ -205,6 +209,9 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
     </li>
     <li class="nav-item">
         <a class="nav-link " aria-disabled="true"></a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link btn btn-warning" href="class_insert.php">Add Class</a>
     </li>
     </ul>
     <!-- nav  end-->
@@ -240,7 +247,7 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
     <!-- Modal content-->
     <div class="modal-content" style="width: 88%;">
       <div class="modal-header" style="background-color:rgb(255, 255, 255);">
-        <a href="#" class="close" data-dismiss="modal" style="position: absolute; right: 24px;">&times;</a>
+        <a href="#" class="close" data-dismiss="modal" style="position: absolute;right: 2px;top: -15px;color:black;">&times;</a>
         <h4 class="modal-title">Photo</h4>
       </div>
       <div class="modal-body" id="modalBody" style="background-color: #ffffff;">
@@ -260,9 +267,6 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
   <div class="container">
       
             <?php
-                
-
-               
                 if(isset($_GET['action']) && $_GET['action'] == 'update'){
                   $id = $_GET['id'];
                   $sql = "SELECT student_details.id,student_details.name,student_details.age,student_details.gender,class_details.class,student_details.photo,student_details.dob,class_details.id  as c_id FROM student_details INNER JOIN class_details ON student_details.class_id = class_details.id WHERE student_details.id = '$id'";
@@ -275,10 +279,8 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
                       $class = $row['class'];
                       $gender = $row['gender'];
                       $photo = $row['photo'];
-                      $date = $row['dob'];
-                  
-                    
-          ?>
+                      $date = $row['dob'];      
+            ?>
 
              <div class="container col-8 border shadow p-3 mb-5 bg-body rounded dblur">
                   <form action="<?php echo $_SERVER["PHP_SELF"];?>" method="post" enctype="multipart/form-data" onsubmit="if (!validate()) { document.getElementById('blockScreen').style.display = 'none'; document.querySelector('.dblur').style.filter = 'none'; return false; }">
@@ -333,7 +335,7 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
                       
                       </div>
                       <div class="col-sm-2 mt-3">
-                      <?php echo "<td><a href='#' class='' data-toggle='modal' id='btnid' onclick='passMessage(\"$photo\")'><img src='witness.png' style='width:20px;height:auto;'></a></td>"; ?>
+                      <?php echo "<td><a href='#' class='' data-toggle='modal' id='btnid' onclick='passMessage(\"$photo\")'><img src='witness.png' style='width:20px;height:auto;' alt='Witness Image'></a></td>"; ?>
 
                       </div>
                     </div>
@@ -377,7 +379,7 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
                       $student_id = $row['student_id'];
                       echo "<div style='border: 1px solid #ddd; margin: 5px; position: relative; width: calc(20.33% - 10px);'>";
                       echo "<span style='position: absolute; top: 5px; right: 5px; color: black; cursor: pointer;' onclick='deletePhoto(\"$image_id,$student_id\")'>X</span>";
-                      echo "<img src='$photo' width='100%' height='auto' style='display: block;'>";
+                      echo "<img src='$photo' width='100%' height='auto' style='display: block;' alt='Gallery image'>";
                       echo "</div>";
                     }
                     echo "</div>";
@@ -394,57 +396,72 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
              
 
 
-<?php
-}}
-mysqli_free_result($result);
-}elseif(isset($_GET['action']) && $_GET['action'] == 'gallery'){
+            <?php
+              }}
+              mysqli_free_result($result);
+              }elseif(isset($_GET['action']) && $_GET['action'] == 'gallery'){
   //Gallery view----==================================================Gallery view================================Gallery view================================Gallery view===============================================================
-  $id = $_GET['id'];
-  $name = $_GET['name'];
-  $sql = "SELECT student_gallery.gallery_photo, student_details.name,student_details.register_id, student_details.age, student_details.gender, class_details.class, student_details.dob FROM student_gallery INNER JOIN student_details ON student_gallery.student_id = student_details.id INNER JOIN class_details ON student_details.class_id = class_details.id WHERE student_gallery.student_id = '$id'";
-  $result = $conn->query($sql);
-  if($result->num_rows > 0){
-    $studentDetails = $result->fetch_assoc();
-    ?>
+              $id = $_GET['id'];
+              $name = $_GET['name'];
+              $sql = "SELECT student_gallery.gallery_photo, student_details.name,student_details.register_id, student_details.age, student_details.gender, class_details.class, student_details.dob FROM student_gallery INNER JOIN student_details ON student_gallery.student_id = student_details.id INNER JOIN class_details ON student_details.class_id = class_details.id WHERE student_gallery.student_id = '$id'";
+              $result = $conn->query($sql);
+              if($result->num_rows > 0){
+                $studentDetails = $result->fetch_assoc();
+                ?>
     <div class="container border shadow">
-    <div class="row col-12 text-center">
-            <h2>Student Details</h2>
-          </div>
-          <hr><hr>
-          <div class="row col-12 ">
-            <strong><p>Registration ID : <?php echo ucfirst($studentDetails['register_id']);?> </p></strong>
-            <strong><p>Student Name : <?php echo ucfirst($studentDetails['name']);?> </p></strong>
-            <strong><p>Age : <?php echo $studentDetails['age'];?> </p></strong>
-            <strong><p>Gender : <?php echo ucfirst($studentDetails['gender']);?> </p></strong>
-            <strong><p>Class : <?php echo ucfirst($studentDetails['class']);?> </p></strong>
-            <strong><p>Date of Birth : <?php echo date('jS M Y', strtotime($studentDetails['dob']));?> </p></strong>
-          </div>
-          <hr><hr>
-          <div class="row col-12 text-center">
-            <h2>Gallery</h2>
-          </div>
-          <hr><hr>
-          <div class="row mt-4">
-    <?php
-    
-    do {
-      ?>
-      
-          
-            <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
-              <div class="card" style="width: 100%;">
-                <img class="card-img-top" src="<?php echo $studentDetails['gallery_photo'] ?>" alt="Card image cap">
-              </div>
-            </div>
-            
-         
-      
-      
-      
-      <?php } while($studentDetails = $result->fetch_assoc()); ?> 
-        </div>
+      <div class="row col-12 text-center">
+        <h2>Student Details</h2>
       </div>
-      <?php
+      <hr><hr>
+      <div class="row col-12 ">
+        <strong><p>Registration ID : <?php echo ucfirst($studentDetails['register_id']);?> </p></strong>
+        <strong><p>Student Name : <?php echo ucfirst($studentDetails['name']);?> </p></strong>
+        <strong><p>Age : <?php echo $studentDetails['age'];?> </p></strong>
+        <strong><p>Gender : <?php echo ucfirst($studentDetails['gender']);?> </p></strong>
+        <strong><p>Class : <?php echo ucfirst($studentDetails['class']);?> </p></strong>
+        <strong><p>Date of Birth : <?php echo date('jS M Y', strtotime($studentDetails['dob']));?> </p></strong>
+      </div>
+      <hr><hr>
+      <div class="row col-12 text-center">
+        <h2>Gallery</h2>
+      </div>
+      <hr><hr>
+      <div class="row mt-4">
+        <?php
+        do {
+          ?>
+          <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+            <div class="card" style="width: 100%;">
+              <img class="card-img-top" src="<?php echo $studentDetails['gallery_photo'] ?>" alt="Card image cap">
+            </div>
+          </div>
+          <?php 
+        } while($studentDetails = $result->fetch_assoc()); 
+        ?> 
+      </div>
+    </div>
+    <?php
+  } else {
+    $dob = '';
+    $age = '';
+    $gender = '';
+    $class = '';
+    echo "<div class='container border shadow'>
+    <div class='row col-12 text-center'>
+    <h2>Student Details</h2></div><hr><hr>
+    <div class='row col-12 '><strong><p>Registration ID : $id </p></strong>
+    <strong><p>Student Name : $name </p>
+    </div><hr><hr>
+    <div class='row col-12 text-center'>
+    <h2>Gallery</h2>
+    </div><hr><hr>
+    <div class='row mt-4'>
+    <p>No images found in the gallery.</p>
+    <div class='text-center mt-3'>
+      <a href='view.php?action=update&id=<?php echo $id; ?>' class='btn btn-success btn-sm'>Add Gallery</a>
+    </div>
+    </div></div>";
+  
   }
 
 }else{
@@ -480,10 +497,7 @@ mysqli_free_result($result);
     </div>
   </div>
   <div class="container dblur">
-  <table class="table table-primary dblur">
-      
-       
-
+  <table class="table table-primary dblur table-overflow">
       <?php
   $name = '';
   $age = '';
@@ -531,8 +545,8 @@ mysqli_free_result($result);
             INNER JOIN class_details ON student_details.class_id = class_details.id 
             WHERE (student_details.status = 'active' OR student_details.status = 'inactive')";
 
-    // Filter conditions
-    $conditions = [];
+  
+    $conditions = array();
 
     if ($c_id !== '') {
         $conditions[] = "student_details.class_id = '$c_id'";
@@ -546,12 +560,12 @@ mysqli_free_result($result);
         $conditions[] = "student_details.register_id = '$registerid'";
     }
 
-    // Add conditions to the query if any exist
+    
     if (count($conditions) > 0) {
         $sql .= " AND " . implode(" AND ", $conditions);
     }
 
-    // Order the results by priority
+    
     $sql .= " ORDER BY student_details.priority ASC";
     $result = $conn->query($sql);
     if ($result->num_rows > 0) {
@@ -569,15 +583,15 @@ mysqli_free_result($result);
         
        
         echo "<td  class='text-center'>
-        <a href='$self?action=update&id=$id' class=''><img src='edit.png' style='width:20px;height:auto;' ></a>
+        <a href='$self?action=update&id=$id' class=''><img src='edit.png' style='width:20px;height:auto;' alt='edit image'></a>
         <div style='display:inline-block; width:10px;'></div>
-        <a href='#' class='' onclick='confirmDelete(\"$id\")'><img src='delete.png' style='width:20px;height:auto;' ></a>
+        <a href='#' class='' onclick='confirmDelete(\"$id\")'><img src='delete.png' style='width:20px;height:auto;' alt='delete image'></a>
         </td>";
         
         $path =$row['photo'];
         // echo "<td><a href=''><img src='$path' style='width:50px;height:auto;'></a></td>";
-        echo "<td class='text-center'><a href='#' class='' data-toggle='modal' id='btnid' onclick='passMessage(\"$path\")'><img src='witness.png' style= 'width:20px;height:auto;' ></a></td>";
-        echo "<td class='text-center'><a href='$self?action=gallery&id=$id&name=$name'   ><img src='gallery.png' style= 'width:20px;height:auto;' ></a></td>";
+        echo "<td class='text-center'><a href='#' class='' data-toggle='modal' id='btnid' onclick='passMessage(\"$path\")'><img src='witness.png' style= 'width:20px;height:auto;' alt='edit image ></a></td>";
+        echo "<td class='text-center'><a href='$self?action=gallery&id=$id&name=$name'   ><img src='gallery.png' style= 'width:20px;height:auto;' alt='gallery image ></a></td>";
        
         $i = $row['id'];
         $checked = ($row['status'] == 'active') ? 'checked' : '';
@@ -594,7 +608,18 @@ mysqli_free_result($result);
       
 
   }else{
-    $sql2 = "SELECT student_details.id, student_details.name, student_details.age, student_details.gender, class_details.class, student_details.priority,student_details.photo,student_details.register_id,student_details.status,student_details.dob FROM student_details INNER JOIN class_details ON student_details.class_id = class_details.id WHERE student_details.status = 'active' OR student_details.status = 'inactive' ORDER BY student_details.priority ASC";
+    $sql2 = "SELECT * FROM student_details ORDER BY priority DESC LIMIT 1";
+        $result2 = $conn->query($sql2);
+        
+        if ($result2 && $result2->num_rows > 0) {
+            $data = $result2->fetch_assoc();
+            $lastpriority = $data['priority'];
+            // echo "p ok";
+            
+        } else {
+            $priority = 1; // Default priority if no records found
+        }
+    $sql2 = "SELECT student_details.id, student_details.name, student_details.age, student_details.gender, class_details.class, student_details.priority,student_details.photo,student_details.register_id,student_details.status,student_details.dob FROM student_details INNER JOIN class_details ON student_details.class_id = class_details.id WHERE student_details.status = 'active' OR student_details.status = 'inactive'  ORDER BY student_details.priority ASC";
     $result = $conn->query($sql2);
     ?>
     <thead class="dblur">
@@ -618,6 +643,8 @@ mysqli_free_result($result);
 
     if ($result->num_rows > 0) {
       while($row = $result->fetch_assoc()) {
+       
+       
         $self = $_SERVER['PHP_SELF'];
         $id = $row["id"];
         // echo "<pre>";
@@ -651,14 +678,17 @@ mysqli_free_result($result);
               <span class='info-text'></span></td>";
             
             if($p == 1) {
+            
               echo "<td  class='text-center'><a href='#' onclick='changePriority(\"down\", $p, $id)'><img src='download.png' style='width:20px;height:auto;' ></a></td>";
-            } elseif($p == $result->num_rows) {
+            } elseif($p == $lastpriority) {
               echo "<td  class='text-center'><a href='#' onclick='changePriority(\"up\", $p, $id)'><img src='up-arrow.png' style= 'width:20px;height:auto;' ></a></td>";
             } else {
+              
               echo "<td  class='text-center'><a href='#' onclick='changePriority(\"up\", $p, $id)'><img src='up-arrow.png' style= 'width:20px;height:auto;' ></a>
               <a href='#' onclick='changePriority(\"down\", $p, $id)'><img src='download.png' style='width:20px;height:auto;' ></a></td>";
             }
             echo "</tr>";
+       
       }
       mysqli_free_result($result);
     }else {
