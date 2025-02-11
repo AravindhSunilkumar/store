@@ -614,33 +614,31 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
     </div>
   </div>
   <div class="container dblur">
-  <table class="table table-primary dblur table-overflow">
-      <?php
-  $name = '';
-  $age = '';
-  $class = '';
-  $gender = '';
-  if(($_SERVER['REQUEST_METHOD'] == 'GET') && (isset($_GET['filter']))){
-    $c_id = $_GET['id'];
-    ?>
-    <thead>
-        <tr>
-          
-          <th scope="col " style="text-align: center;">Registration Id</th>
-          <th scope="col ">Name</th>
-          <th scope="col " style="text-align: center;">Class</th>
-          <th scope="col " style="text-align: center;">Age</th>
-          <th scope="col " style="text-align: center;">Dob</th>
-          <th scope="col " style="text-align: center;">Gender</th>
-          <th scope="col " style="text-align: center;">Action</th>
-          <th scope="col " style="text-align: center;">Image</th>
-          <th scope="col " style="text-align: center;">Gallery</th>
-          <th scope="col " style="text-align: center;">Status</th>
+  <table class="table table-primary dblur table-overflow" id="studentTable">
+    <?php
+    $name = '';
+    $age = '';
+    $class = '';
+    $gender = '';
 
-          
-        </tr>
-      </thead>
-      <tbody>
+    if (($_SERVER['REQUEST_METHOD'] == 'GET') && (isset($_GET['filter']))) {
+        $c_id = $_GET['id'];
+        ?>
+        <thead>
+            <tr>
+                <th scope="col" style="text-align: center;">Registration Id</th>
+                <th scope="col">Name</th>
+                <th scope="col" style="text-align: center;">Class</th>
+                <th scope="col" style="text-align: center;">Age</th>
+                <th scope="col" style="text-align: center;">Dob</th>
+                <th scope="col" style="text-align: center;">Gender</th>
+                <th scope="col" style="text-align: center;">Action</th>
+                <th scope="col" style="text-align: center;">Image</th>
+                <th scope="col" style="text-align: center;">Gallery</th>
+                <th scope="col" style="text-align: center;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
     <?php
     $c_id = isset($_GET['id']) && $_GET['id'] !== 'default' ? $conn->real_escape_string($_GET['id']) : '';
     $studentname = isset($_GET['studentname']) ? $conn->real_escape_string($_GET['studentname']) : '';
@@ -724,93 +722,54 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
       }
       
 
-  }else{
-    $sql2 = "SELECT * FROM student_details ORDER BY priority DESC LIMIT 1";
-        $result2 = $conn->query($sql2);
-        
-        if ($result2 && $result2->num_rows > 0) {
-            $data = $result2->fetch_assoc();
-            $lastpriority = $data['priority'];
-            // echo "p ok";
-            
-        } else {
-            $priority = 1; // Default priority if no records found
-        }
-    $sql2 = "SELECT student_details.id, student_details.name, student_details.age, student_details.gender, class_details.class, student_details.priority,student_details.photo,student_details.register_id,student_details.status,student_details.dob FROM student_details INNER JOIN class_details ON student_details.class_id = class_details.id WHERE student_details.status = 'active' OR student_details.status = 'inactive'  ORDER BY student_details.priority ASC";
-    $result = $conn->query($sql2);
+  }else {
+    $sql = "SELECT * FROM student_details ORDER BY priority ASC";
+    $result = $conn->query($sql);
     ?>
     <thead class="dblur">
         <tr>
-          
-          <th scope="col " style="text-align: center;" class="dblur">Registration Id</th>
-          <th scope="col ">Name</th>
-          <th scope="col " style="text-align: center;">Class</th>
-          <th scope="col " style="text-align: center;">Age</th>
-          <th scope="col " style="text-align: center;">Dob</th>
-          <th scope="col " style="text-align: center;">Gender</th>
-          <th scope="col " style="text-align: center;">Action</th>
-          <th scope="col " style="text-align: center;">Image</th>
-          <th scope="col " style="text-align: center;">Gallery</th>
-          <th scope="col " style="text-align: center;">Status</th>
-          <th scope="col " style="text-align: center;">Priority</th>
+            <th scope="col" style="text-align: center;">Registration Id</th>
+            <th scope="col">Name</th>
+            <th scope="col" style="text-align: center;">Class</th>
+            <th scope="col" style="text-align: center;">Age</th>
+            <th scope="col" style="text-align: center;">Dob</th>
+            <th scope="col" style="text-align: center;">Gender</th>
+            <th scope="col" style="text-align: center;">Action</th>
+            <th scope="col" style="text-align: center;">Image</th>
+            <th scope="col" style="text-align: center;">Gallery</th>
+            <th scope="col" style="text-align: center;">Status</th>
         </tr>
-      </thead>
-      <tbody>
+    </thead>
+    <tbody>
         <?php
-
-    if ($result->num_rows > 0) {
-      while($row = $result->fetch_assoc()) {
-       
-       
-        $self = $_SERVER['PHP_SELF'];
-        $id = $row["id"];
-        // echo "<pre>";
-        // var_dump($row);
-        // echo "</pre>";
-        echo "<tr>";
-        $priority = $row['priority'];
-        echo "<td class='text-center'>" . $row["register_id"]. "</td>";
-        echo "<td >" . ucfirst($row["name"]). "</td>";
-        echo "<td class='text-center'>" . ucfirst($row["class"]). "</td>";
-        echo "<td class='text-center'>" . $row["age"]. "</td>";
-        echo "<td class='text-center'>" . date('jS M Y', strtotime($row["dob"])). "</td>";
-        echo "<td class='text-center'>" . ucfirst($row['gender']). "</td>";
-        
-        $p= $row['priority'];
-        $name= $row['name'];
-        
-        echo "<td  class='text-center'>
-            <a href='$self?action=update&id=$id' class=''><img src='edit.png' style='width:20px;height:auto;' ></a>
-            <div style='display:inline-block; width:10px;'></div>
-            <a href='#' class='' onclick='confirmDelete(\"$id\")'><img src='delete.png' style='width:20px;height:auto;' ></a>
-        </td>";
-            $path =$row['photo'];
-            // echo "<td><a href=''><img src='$path' style='width:50px;height:auto;'></a></td>";
-            echo "<td class='text-center'><a href='#' class='' data-toggle='modal' id='btnid' onclick='passMessage(\"$path\")'><img src='witness.png' style= 'width:20px;height:auto;' ></a></td>";
-            echo "<td class='text-center'><a href='$self?action=gallery&id=$id&name=$name'   ><img src='gallery.png' style= 'width:20px;height:auto;' ></a></td>";
-            $i = $row['id'];
-            $checked = ($row['status'] == 'active') ? 'checked' : '';
-            echo "<td class='text-center'><input class='input-switch' type='checkbox' id='$i' $checked>
-              <label class='label-switch' for='$i'></label>
-              <span class='info-text'></span></td>";
-            
-            if($p == 1) {
-            
-              echo "<td  class='text-center'><a href='#' onclick='changePriority(\"down\", $p, $id)'><img src='download.png' style='width:20px;height:auto;' ></a></td>";
-            } elseif($p == $lastpriority) {
-              echo "<td  class='text-center'><a href='#' onclick='changePriority(\"up\", $p, $id)'><img src='up-arrow.png' style= 'width:20px;height:auto;' ></a></td>";
-            } else {
-              
-              echo "<td  class='text-center'><a href='#' onclick='changePriority(\"up\", $p, $id)'><img src='up-arrow.png' style= 'width:20px;height:auto;' ></a>
-              <a href='#' onclick='changePriority(\"down\", $p, $id)'><img src='download.png' style='width:20px;height:auto;' ></a></td>";
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $self = $_SERVER['PHP_SELF'];
+                $id = $row["id"];
+                echo "<tr draggable='true' data-id='$id'>";
+                echo "<td class='text-center'>" . $row["register_id"] . "</td>";
+                echo "<td>" . ucfirst($row["name"]) . "</td>";
+                echo "<td class='text-center'>" . ucfirst($row["class_id"]) . "</td>";
+                echo "<td class='text-center'>" . $row["age"] . "</td>";
+                echo "<td class='text-center'>" . date('jS M Y', strtotime($row["dob"])) . "</td>";
+                echo "<td class='text-center'>" . ucfirst($row["gender"]) . "</td>";
+                echo "<td class='text-center'>
+                    <a href='$self?action=update&id=$id'><img src='edit.png' style='width:20px;height:auto;'></a>
+                    <div style='display:inline-block; width:10px;'></div>
+                    <a href='#' onclick='confirmDelete(\"$id\")'><img src='delete.png' style='width:20px;height:auto;'></a>
+                </td>";
+                $path = $row['photo'];
+                echo "<td class='text-center'><a href='#' onclick='passMessage(\"$path\")'><img src='witness.png' style='width:20px;height:auto;'></a></td>";
+                echo "<td class='text-center'><a href='$self?action=gallery&id=$id'><img src='gallery.png' style='width:20px;height:auto;'></a></td>";
+                $i = $row['id'];
+                $checked = ($row['status'] == 'active') ? 'checked' : '';
+                echo "<td class='text-center'><input class='input-switch' type='checkbox' id='$i' $checked>
+                      <label class='label-switch' for='$i'></label><span class='info-text'></span></td>";
+                echo "</tr>";
             }
-            echo "</tr>";
-       
-      }
-      mysqli_free_result($result);
-    }else {
-      echo "<p>0 results</p>";
-      }
+        } else {
+            echo "<tr><td colspan='10' class='text-center'>No results</td></tr>";
+        }
       
 
   }
@@ -857,7 +816,64 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
  
   ?>
 
+<script>
+    const table = document.querySelector("#studentTable tbody");
+    let draggedRow = null;
 
+    table.addEventListener("dragstart", (e) => {
+        draggedRow = e.target;
+        e.target.classList.add("dragging");
+    });
+
+    table.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        const afterElement = getDragAfterElement(table, e.clientY);
+        if (afterElement == null) {
+            table.appendChild(draggedRow);
+        } else {
+            table.insertBefore(draggedRow, afterElement);
+        }
+    });
+
+    table.addEventListener("dragend", () => {
+        draggedRow.classList.remove("dragging");
+        updatePriorities();
+    });
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll("tr:not(.dragging)")];
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function updatePriorities() {
+        const rows = table.querySelectorAll("tr");
+        const order = Array.from(rows).map((row, index) => ({
+            id: row.getAttribute("data-id"),
+            priority: index + 1
+        }));
+
+        fetch("update_priority.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(order)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data.message);
+        })
+        .catch(error => {
+            console.error("Error updating priorities:", error);
+        });
+    }
+</script>
   <script src="js/modal.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
