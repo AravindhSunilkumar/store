@@ -1,42 +1,108 @@
 function validate() {
   document.getElementById('blockScreen').style.display = 'block';
   document.querySelector('.dblur').style.filter = 'blur(8px)';
-  var name = document.getElementById('name').value;
+  console.log('fname');
+  // Retrieve values of the form fields
+  var fname = document.getElementById('fname').value;
+  console.log(fname);
+  var lname = document.getElementById('lname').value;
   var age = document.getElementById('age').value;
   var class_id = document.getElementById('class_id').value;
   var dob = document.getElementById('dob').value;
   var gender = document.getElementById('gender').value;
-
-  var namePattern = /^[a-zA-Z\s]+$/;
-  var datePattern = /^\d{4}-\d{2}-\d{2}$/;
-
-  if (!name || !namePattern.test(name)) {
-    alert('Please enter a valid name without special characters.');
-    
+  var fathername = document.getElementById('fathername').value;
+  var fphonenumber = document.getElementById('fphonenumber').value;
+  var femailid = document.getElementById('femailid').value;
+  var mothername = document.getElementById('mothername').value;
+  var mphonenumber = document.getElementById('mphonenumber').value;
+  var memailid = document.getElementById('memailid').value;
+  var primary = document.querySelector('input[name="primary"]:checked');
+  
+  // Validate First Name
+  if (!fname) {
+    console.log(fname);
+    alert('Please enter a valid first name without special characters.');
     return false;
   }
 
-  if (!age) {
-    alert("Please enter a valid age");
+  // Validate Last Name
+  if (!lname ) {
+    alert('Please enter a valid last name without special characters.');
     return false;
   }
 
+  // Validate Age
+  if (!age || isNaN(age) || age <= 0) {
+    alert('Please enter a valid age.');
+    return false;
+  }
+
+  // Validate Class
   if (!class_id) {
-    alert("Please select a class");
+    alert('Please select a class.');
     return false;
   }
 
+  // Validate Date of Birth
+  var datePattern = /^\d{4}-\d{2}-\d{2}$/;
   if (!dob || !datePattern.test(dob)) {
     alert('Please enter a valid date in the format YYYY-MM-DD.');
     return false;
   }
 
-  if (gender === '') {
+  // Validate Gender
+  if (!gender) {
     alert('Please select a gender.');
     return false;
   }
-  return true;
+
+  // Validate Father Name
+  if (!fathername || /[^a-zA-Z ]/.test(fathername)) {
+    alert('Please enter a valid father name.');
+    return false;
   }
+
+  // Validate Father Mobile Number
+  var phonePattern = /^[0-9]{10}$/;
+  if (!fphonenumber || !phonePattern.test(fphonenumber)) {
+    alert('Please enter a valid 10-digit mobile number for father.');
+    return false;
+  }
+
+  // Validate Father Email ID
+  var emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+  if (!femailid || !emailPattern.test(femailid)) {
+    alert('Please enter a valid email ID for father.');
+    return false;
+  }
+
+  // Validate Mother Name
+  if (!mothername || /[^a-zA-Z ]/.test(mothername)) {
+    alert('Please enter a valid mother name.');
+    return false;
+  }
+
+  // Validate Mother Mobile Number
+  if (!mphonenumber || !phonePattern.test(mphonenumber)) {
+    alert('Please enter a valid 10-digit mobile number for mother.');
+    return false;
+  }
+
+  // Validate Mother Email ID
+  if (!memailid || !emailPattern.test(memailid)) {
+    alert('Please enter a valid email ID for mother.');
+    return false;
+  }
+
+  // Validate Primary Contact Selection
+  if (!primary) {
+    alert('Please select a primary contact.');
+    return false;
+  }
+
+  return true;
+}
+
 function confirmDelete(id) {
 document.getElementById('blockScreen').style.display = 'block';
 document.querySelector('.dblur').style.filter = 'blur(8px)';
