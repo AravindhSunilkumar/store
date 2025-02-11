@@ -30,16 +30,17 @@ if(($_SERVER["REQUEST_METHOD"] == 'POST') and (isset($_POST['submit'])) ){
 <body>
   <!-- nav -->
   <ul class="nav justify-content-center">
-    <li class="nav-item">
-        <a class="nav-link active btn btn-warning" aria-current="page" href="view.php">Home</a>
-    </li>
-    
-    <li class="nav-item">
-        <a class="nav-link btn btn-warning" href="form.php">Add Student</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link btn btn-warning" href="class_insert.php">Add Class</a>
-    </li>
+        <li class="nav-item">
+            <a class="nav-link  btn btn-warning mt-2" aria-current="page" href="view.php">Home</a>
+        </li>
+        
+        <li class="nav-item">
+            <a class="nav-link btn btn-warning mt-2 " href="form.php">Add Student</a>
+        </li>
+        
+        <li class="nav-item ">
+            <a class="nav-link btn btn-warning mt-2" href="class_insert.php">Add Class</a>
+        </li>
     </ul>
     <!-- nav  end-->
   <div class="container col-12 col-md-4 shadow rounded mt-3">
