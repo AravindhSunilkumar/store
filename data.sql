@@ -2,7 +2,8 @@
 SQLyog Ultimate v10.00 Beta1
 MySQL - 5.1.73-community : Database - student
 *********************************************************************
-*/
+*/
+
 
 /*!40101 SET NAMES utf8 */;
 
@@ -23,13 +24,38 @@ DROP TABLE IF EXISTS `class_details`;
 CREATE TABLE `class_details` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `class` varchar(50) NOT NULL,
+  `age_from` smallint(6) NOT NULL,
+  `age_to` smallint(6) NOT NULL,
   `status` enum('active','inactive') NOT NULL DEFAULT 'active',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=latin1;
 
 /*Data for the table `class_details` */
 
-insert  into `class_details`(`id`,`class`,`status`) values (1,'1st standard','active'),(2,'2th standard','inactive'),(4,'4th standard','active'),(5,'5th standard','active');
+insert  into `class_details`(`id`,`class`,`age_from`,`age_to`,`status`) values (1,'1st standard',5,7,'active'),(2,'2th standard',7,9,'inactive'),(4,'4th standard',9,11,'active'),(5,'5th standard',11,13,'active'),(6,'6th standard',13,15,'active'),(11,'7th standard',15,17,'active');
+
+/*Table structure for table `parent_details` */
+
+DROP TABLE IF EXISTS `parent_details`;
+
+CREATE TABLE `parent_details` (
+  `parent_id` bigint(10) NOT NULL AUTO_INCREMENT,
+  `student_id` bigint(10) NOT NULL,
+  `father_name` varchar(100) NOT NULL,
+  `father_number` varchar(10) NOT NULL,
+  `father_mail` varchar(50) NOT NULL,
+  `mother_name` varchar(100) NOT NULL,
+  `mother_number` varchar(10) NOT NULL,
+  `mother_mail` varchar(50) NOT NULL,
+  `primary_contact` enum('father','mother') NOT NULL,
+  PRIMARY KEY (`parent_id`),
+  KEY `parent_details` (`student_id`),
+  CONSTRAINT `parent_details` FOREIGN KEY (`student_id`) REFERENCES `student_details` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=latin1;
+
+/*Data for the table `parent_details` */
+
+insert  into `parent_details`(`parent_id`,`student_id`,`father_name`,`father_number`,`father_mail`,`mother_name`,`mother_number`,`mother_mail`,`primary_contact`) values (9,62,'sunilkumar','1234567890','lavax68876@shouxs.com','sandth','1234567890','lavax68876@shouxs.com','father'),(10,63,'aravindh','1234567890','lavax68876@shouxs.com','ads','1234567890','lavax68876@shouxs.com','father'),(11,64,'aravindh','1234567890','lavax68876@shouxs.com','ads','1234567890','lavax68876@shouxs.com','father');
 
 /*Table structure for table `student_details` */
 
@@ -49,11 +75,11 @@ CREATE TABLE `student_details` (
   PRIMARY KEY (`id`),
   KEY `class_id` (`class_id`),
   CONSTRAINT `student_details_ibfk_1` FOREIGN KEY (`class_id`) REFERENCES `class_details` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=65 DEFAULT CHARSET=latin1;
 
 /*Data for the table `student_details` */
 
-insert  into `student_details`(`id`,`register_id`,`class_id`,`name`,`age`,`dob`,`gender`,`photo`,`priority`,`status`) values (2,'0001',4,'web2',23,'2007-06-05','male','students_images/8800_witness.png',1,'active'),(3,'0002',1,'Siva',24,'2003-05-09','female','students_images/7796_man.png',2,'active'),(5,'0003',5,'web3',23,'2007-06-05','male','students_images/8780_witness.png',3,'active'),(9,'0004',1,'aravindh',23,'2007-06-05','male','students_images/5078_man.png',4,'active'),(16,'0006',1,'vivek',12,'2007-06-05','male','students_images/8843_man.png',5,'active'),(31,'0010',1,'reenu',12,'2003-06-05','male','students_images/2531_witness.png',6,'active'),(35,'0012',1,'subash',12,'2003-04-02','male','students_images/4042_man.png',7,'active'),(40,'0013',4,'sooraj',12,'2004-02-28','male','students_images/6715_download.png',8,'active');
+insert  into `student_details`(`id`,`register_id`,`class_id`,`name`,`age`,`dob`,`gender`,`photo`,`priority`,`status`) values (62,'0001',1,'aravindh sunilkumar',5,'2020-01-11','male','students_images/_Screenshot 2025-02-05 124227.png',1,'active'),(63,'0002',1,'sonu soman',5,'2020-01-01','male','students_images/0002_Screenshot 2025-02-05 124227.png',2,'active'),(64,'0003',2,'hari k k',9,'2016-01-11','male','students_images/0003_Screenshot 2025-02-05 124227.png',3,'active');
 
 /*Table structure for table `student_gallery` */
 
@@ -66,11 +92,11 @@ CREATE TABLE `student_gallery` (
   PRIMARY KEY (`gallery_id`),
   KEY `student_id` (`student_id`),
   CONSTRAINT `student_id` FOREIGN KEY (`student_id`) REFERENCES `student_details` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=59 DEFAULT CHARSET=latin1;
 
 /*Data for the table `student_gallery` */
 
-insert  into `student_gallery`(`gallery_id`,`student_id`,`gallery_photo`) values (7,3,'students_images/8126_man.png'),(9,3,'students_images/7176_download.png'),(15,9,'students_images/6620_download.png'),(16,9,'students_images/9843_man.png'),(17,9,'students_images/7097_up-arrow.png'),(25,40,'students_images/1764_man.png'),(28,3,'man.png'),(29,40,'students_images/4796_man.png');
+insert  into `student_gallery`(`gallery_id`,`student_id`,`gallery_photo`) values (58,62,'students_images/_Screenshot 2025-02-07 110312.png');
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
