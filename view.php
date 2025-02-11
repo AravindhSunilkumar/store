@@ -35,7 +35,7 @@ if (isset($_FILES['files']) && isset($_POST['id'])) {
       echo "File " . $targetFilePath . " uploaded successfully.<br>";
       $stmt->close();
     } else {
-      echo "Error uploading file <script>console.log( " . $targetFilePath . ");</script>.<br>";
+      // echo "Error uploading file <script>console.log( " . $targetFilePath . ");</script>.<br>";
     }
   }
 }
@@ -48,7 +48,9 @@ if(($_SERVER['REQUEST_METHOD'] == 'POST') && (isset($_POST['supdate']))){
  
 
   $name = $age = $class = $gender = $id ='';
-  $name = $conn->real_escape_string($_POST['name']);
+  $fname = $conn->real_escape_string($_POST['fname']);
+  $lname = $conn->real_escape_string($_POST['lname']);
+  $name = $fname.' '.$lname;
   $age = $conn->real_escape_string($_POST['age']);
   $class = $conn->real_escape_string($_POST['class_id']);
   $gender = $conn->real_escape_string($_POST['gender']);
@@ -130,7 +132,19 @@ if(($_SERVER['REQUEST_METHOD'] == 'POST') && (isset($_POST['supdate']))){
           $sql = "UPDATE student_details SET name='$name',age='$age',class_id='$class',gender = '$gender',dob = '$date' WHERE id = '$id'";
 
         }
-  if ($conn->query($sql) === TRUE) {
+        if ($conn->query($sql) === TRUE) {
+          $last_id = $id;
+    $father_name = $conn->real_escape_string((string)$_POST['fathername']);
+    $fphonenumber = $conn->real_escape_string((string)$_POST['fphonenumber']);
+    $femailid = $conn->real_escape_string((string)$_POST['femailid']);
+    $mothername = $conn->real_escape_string((string)$_POST['mothername']);
+    $mphonenumber = $conn->real_escape_string((string)$_POST['mphonenumber']);
+    $memailid = $conn->real_escape_string((string)$_POST['memailid']);
+    $primary = $conn->real_escape_string((string)$_POST['primary']);
+    $sql = "insert into parent_details (student_id,father_name,father_number,father_mail,mother_name,mother_number,mother_mail,primary_contact) values ('$last_id','$father_name','$fphonenumber','$femailid','$mothername','$mphonenumber','$memailid','$primary')";
+    if ($conn->query($sql) !== TRUE) {
+        echo "<script>alert('Error: " . $conn->error . "');</script>";
+    }
     echo "<script>
             alert('Record updated successfully');
             window.location.href = 'view.php';
@@ -201,17 +215,15 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
   <!-- nav -->
   <ul class="nav justify-content-center">
     <li class="nav-item mt-2">
-        <a class="nav-link active btn btn-warning" aria-current="page"  href="view.php">Home</a>
+        <a class="nav-link active btn btn-warning ml-2"  aria-current="page"  href="view.php">Home</a>
     </li>
     
     <li class="nav-item ml-2 mt-2">
         <a class="nav-link btn btn-warning ml-2" href="form.php">Add Student</a>
     </li>
+   
     <li class="nav-item">
-        <a class="nav-link " aria-disabled="true"></a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link btn btn-warning" href="class_insert.php">Add Class</a>
+        <a class="nav-link btn btn-warning mt-2" href="class_insert.php">Add Class</a>
     </li>
     </ul>
     <!-- nav  end-->
@@ -275,81 +287,186 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
                     while($row = $result->fetch_assoc()) {
                      
                       $name = $row['name'];
+                      $fullName = explode(' ', $row['name'], 2);
+                      $firstName = $fullName[0];
+                      $lastName = isset($fullName[1]) ? $fullName[1] : '';
                       $age = $row['age'];
                       $class = $row['class'];
                       $gender = $row['gender'];
                       $photo = $row['photo'];
-                      $date = $row['dob'];      
+                      $date = $row['dob'];  
+                      $sid = $row['id'];
+                      $sql2 = "SELECT * FROM parent_details WHERE student_id = '$sid'";
+                      $result2 = $conn->query($sql2);
+                      if($result2->num_rows > 0){
+                        while($row2 = $result2->fetch_assoc()){
+                          $father_name = $row2['father_name'];
+                          $father_number = $row2['father_number'];
+                          $father_mail = $row2['father_mail'];
+                          $mother_name = $row2['mother_name'];
+                          $mother_number = $row2['mother_number'];
+                          $mother_mail = $row2['mother_mail'];
+                          $primary = $row2['primary_contact'];
+
+                        }
+                      }else{
+                          $father_name =  '';
+                          $father_number =  '';
+                          $father_mail =  '';
+                          $mother_name =  '';
+                          $mother_number =  '';
+                          $mother_mail = '';
+                          $primary = '';
+
+                      }
             ?>
 
-             <div class="container col-8 border shadow p-3 mb-5 bg-body rounded dblur">
+             <div class="container col-10 border shadow p-3 mb-5 bg-body rounded dblur">
                   <form action="<?php echo $_SERVER["PHP_SELF"];?>" method="post" enctype="multipart/form-data" onsubmit="if (!validate()) { document.getElementById('blockScreen').style.display = 'none'; document.querySelector('.dblur').style.filter = 'none'; return false; }">
                   <div class="container">
                       <h2 class="text-center">Edit Student</h2>
                       <div class="form-group row mt-2">
-                          <label for="name" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Name:</label>
+                          
+                          <div class="col-sm-4">
+                            <label for="fname" class="col-sm-4 col-form-label text-end mt-2"><span class="text-danger">*</span>First Name:</label>
+                            <input type="hidden" class="form-control mt-2" id="id" name="id" value="<?php echo $id; ?>" required>
+                      
+                            <input type="text" class="form-control mt-2" id="fname" name="fname" value="<?php echo $firstName; ?>" required>
+                          </div>
+                          <div class="col-sm-4">
+                            <label for="lname" class="col-sm-4 col-form-label text-end mt-2"><span class="text-danger">*</span>Last Name:</label>
+                            <input type="text" class="form-control mt-2" id="lname" name="lname" value="<?php echo $lastName; ?>" required>
+                          </div>
+                          
+                          <div class="col-sm-4">
+                            <label for="class" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Class:</label>
+                            <select class="form-select mt-2" id="class_id" name="class_id" aria-label="Default select example">
+                              <?php
+                              $sql1 = "SELECT * FROM class_details WHERE status = 'active'";
+                              $classes = $conn->query($sql1);
+                              
+                              while($row1 = $classes->fetch_assoc()){
+                              $selected = ($row1['class'] == $class) ? 'selected' : '';
+                              echo "<option value=".$row1['id']." $selected>".$row1['class']."</option>";
+                              }
+                              ?>
+                            </select>
+                          </div>
+                          
+                      </div>
+                    <div class="form-group row mt-2">
+                          <div class="col-sm-4">
+                              
+                              <div class="col-sm-4">
+                                <label for="age" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Age:</label>
+                                <input type="number" class="form-control mt-2 col-4" id="age" style="width:235px;" name="age" value="<?php echo $age; ?>" >
+                              </div>
+                          </div>
+                    
                       <div class="col-sm-4">
-                      <input type="hidden" class="form-control mt-2" id="id" name="id" value="<?php echo $id; ?>" required>
+                        <label for="gender" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Gender:</label>
+                        <select class="form-select mt-2" id="gender" name="gender" aria-label="Default select example">
+                        <option value="male" <?php echo ($gender == 'male') ? 'selected' : ''; ?>>Male</option>
+                        <option value="female" <?php echo ($gender == 'female') ? 'selected' : ''; ?>>Female</option>
+                        <option value="other" <?php echo ($gender == 'other') ? 'selected' : ''; ?>>Other</option>
+                        </select>
+                      </div>
+                      <div class="col-sm-4">
+                        <label for="dob" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>DOB:</label>
+                        <input type="date" class="form-control mt-2" id="dob" name="date" value="<?php echo $date; ?>" >
+                      </div>
+
                       
-                      <input type="text" class="form-control mt-2" id="name" name="name" value="<?php echo $name; ?>" required>
                     </div>
-                    <label for="class" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Class:</label>
-                    <div class="col-sm-4">
-                      <select class="form-select mt-2" id="class_id" name="class_id" aria-label="Default select example">
-                      <?php
-                      $sql1 = "SELECT * FROM class_details WHERE status = 'active'";
-                      $classes = $conn->query($sql1);
-                      
-                      while($row1 = $classes->fetch_assoc()){
-                      $selected = ($row1['class'] == $class) ? 'selected' : '';
-                      echo "<option value=".$row1['id']." $selected>".$row1['class']."</option>";
-                      }
-                      ?>
-                      </select>
+                    <div class="row mt-2">
+                      <div class="col-sm-4">
+                          <label for="file" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>File:</label>
+                          <input type="file" class="form-control mt-2" id="file" name="file" value="<?php echo $photo; ?>">
+                          <div class="col-sm-6 d-flex justify-content-end mt-3">
+                           <?php echo "<td><a href='#' class='' data-toggle='modal' id='btnid' onclick='passMessage(\"$photo\")'><img src='witness.png' style='width:20px;height:auto;' alt='Witness Image'></a></td>"; ?>
+
+                          </div>
+                      </div>
                     </div>
+
+                    <div class="row mt-2">
+                      <div class="col-12">
+                          <h3>Parent Details</h3>
+                      </div>
                     </div>
-                    <div class="form-group row mt-2">
-                    <label for="age" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Age:</label>
-                    <div class="col-sm-4">
-                      <input type="number" class="form-control mt-2" id="age" name="age" value="<?php echo $age; ?>" >
+    
+                    <div class="row border rounded">
+                        <div class="col-12 col-md-4">
+                                <div class="mb-3">
+                                    <label for="fathername" class="form-label"><span class="text-danger">*</span>Father Name</label>
+                                    <input type="text" name="fathername" class="form-control form-bottom" id="fathername" value ="<?php echo $father_name;?>" >
+                                    <span class="text-danger size"></span>
+                                </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                                <div class="mb-3">
+                                    <label for="fphonenumber" class="form-label"><span class="text-danger">*</span>Mobile Number</label>
+                                    <input type="text" name="fphonenumber" class="form-control form-bottom" id="fphonenumber" value ="<?php echo $father_number;?>"  >
+                                    <span class="text-danger size"></span>
+                                </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                                <div class="mb-3">
+                                    <label for="femailid" class="form-label"><span class="text-danger">*</span>Email Id</label>
+                                    <input type="text" name="femailid" class="form-control form-bottom" id="femailid" value ="<?php echo $father_mail;?>" >
+                                    <span class="text-danger size"></span>
+                                </div>
+                        </div>
                     </div>
-                    <label for="gender" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>Gender:</label>
-                    <div class="col-sm-4">
-                      <select class="form-select mt-2" id="gender" name="gender" aria-label="Default select example">
-                      <option value="male" <?php echo ($gender == 'male') ? 'selected' : ''; ?>>Male</option>
-                      <option value="female" <?php echo ($gender == 'female') ? 'selected' : ''; ?>>Female</option>
-                      <option value="other" <?php echo ($gender == 'other') ? 'selected' : ''; ?>>Other</option>
-                      </select>
+                    <div class="row border rounded mt-2">
+                        <div class="col-12 col-md-4">
+                                <div class="mb-3">
+                                    <label for="mothername" class="form-label"><span class="text-danger">*</span>Mother Name</label>
+                                    <input type="text" name="mothername" class="form-control form-bottom" id="mothername" value ="<?php echo $mother_name;?>"  >
+                                    <span class="text-danger size"></span>
+                                </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                                <div class="mb-3">
+                                    <label for="mphonenumber" class="form-label"><span class="text-danger">*</span>Mobile Number</label>
+                                    <input type="text" name="mphonenumber" class="form-control form-bottom" id="mphonenumber" value ="<?php echo $mother_number;?>" >
+                                    <span class="text-danger size"></span>
+                                </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                                <div class="mb-3">
+                                    <label for="memailid" class="form-label"><span class="text-danger">*</span>Email Id</label>
+                                    <input type="text" name="memailid" class="form-control form-bottom" id="memailid" value ="<?php echo $mother_mail;?>"  >
+                                    <span class="text-danger size"></span>
+                                </div>
+                        </div>
                     </div>
-                    </div>
-                    <div class="form-group row mt-2">
-                    <label for="dob" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>DOB:</label>
-                    <div class="col-sm-4">
-                      <input type="date" class="form-control mt-2" id="dob" name="date" value="<?php echo $date; ?>" >
+                    <div class="row">
+                    <div class="col-12 col-md-6">
+                            <div class="mb-3">
+                                
+                                <div>
+                                <label for="primary" class="form-label"><span class="text-danger">*</span>Primary Contact: </label>
+                                <div class="form-check form-check-inline">
+                                  <input type="radio" name="primary" class="form-check-input" id="father" value="father" <?php echo ($primary == 'father') ? 'checked' : ''; ?>>
+                                  <label class="form-check-label" for="father">Father</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                  <input type="radio" name="primary" class="form-check-input" id="mother" value="mother" <?php echo ($primary == 'mother') ? 'checked' : ''; ?>>
+                                  <label class="form-check-label" for="mother">Mother</label>
+                                </div>
+                                <span class="text-danger size" id="alertprimary"></span>
+                            </div>
                     </div>
                     
-                    <label for="file" class="col-sm-2 col-form-label text-end mt-2"><span class="text-danger">*</span>File:</label>
-                    <div class="col-sm-4 row">
-                      <div class="col-sm-10">
-                      <input type="file" class="form-control mt-2" id="file" name="file" value="<?php echo $photo; ?>">
-                      
-                      </div>
-                      <div class="col-sm-2 mt-3">
-                      <?php echo "<td><a href='#' class='' data-toggle='modal' id='btnid' onclick='passMessage(\"$photo\")'><img src='witness.png' style='width:20px;height:auto;' alt='Witness Image'></a></td>"; ?>
-
-                      </div>
-                    </div>
-                    <div class="col-sm-2 mt-3">
-                    </div>
-                    </div>
-                    <div class="form-group row mt-2">
-                    <div class="col-12 text-center">
-                      <input type="submit" class="btn btn-primary mt-2" name="supdate" value="Update">
-                      
-                      
-                    </div>
-                    </div>
+                    
                   </div>
+                  <div class=" col-12 form-group row mt-2">
+                      <div class="col-12 text-center">
+                      <a class="btn btn-primary btn-sm" href="javascript:history.back()">Go Back</a>
+                        <input type="submit" class="btn btn-primary mt-2" name="supdate" value="Update">
+                      </div>
+                    </div>
                   </form>
              </div>
 
@@ -590,8 +707,8 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
         
         $path =$row['photo'];
         // echo "<td><a href=''><img src='$path' style='width:50px;height:auto;'></a></td>";
-        echo "<td class='text-center'><a href='#' class='' data-toggle='modal' id='btnid' onclick='passMessage(\"$path\")'><img src='witness.png' style= 'width:20px;height:auto;' alt='edit image ></a></td>";
-        echo "<td class='text-center'><a href='$self?action=gallery&id=$id&name=$name'   ><img src='gallery.png' style= 'width:20px;height:auto;' alt='gallery image ></a></td>";
+        echo "<td class='text-center'><a href='#' class='' data-toggle='modal' id='btnid' onclick='passMessage(\"$path\")'><img src='witness.png' style='width:20px;height:auto;' alt='edit image'></a></td>";
+        echo "<td class='text-center'><a href='$self?action=gallery&id=$id&name=$name'><img src='gallery.png' style='width:20px;height:auto;' alt='gallery image'></a></td>";
        
         $i = $row['id'];
         $checked = ($row['status'] == 'active') ? 'checked' : '';
