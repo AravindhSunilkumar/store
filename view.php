@@ -55,6 +55,7 @@ if(($_SERVER['REQUEST_METHOD'] == 'POST') && (isset($_POST['supdate']))){
   $class = $conn->real_escape_string($_POST['class_id']);
   $gender = $conn->real_escape_string($_POST['gender']);
   $date = $conn->real_escape_string($_POST['date']);
+  $hobbies = !empty($_POST['hobbies']) ? $_POST['hobbies'] : '';
   if (isset($_POST['id'])) {
     $id = $_POST['id'];
   }
@@ -127,9 +128,9 @@ if(($_SERVER['REQUEST_METHOD'] == 'POST') && (isset($_POST['supdate']))){
 
 
         if(!empty($_FILES["file"]["name"])){
-            $sql = "UPDATE student_details SET name='$name',age='$age',class_id='$class',gender = '$gender',photo = '$target_file',dob='$date' WHERE id = '$id'";
+            $sql = "UPDATE student_details SET name='$name',age='$age',class_id='$class',gender = '$gender',photo = '$target_file',dob='$date',hobbies = '$hobbies' WHERE id = '$id'";
         }else{
-          $sql = "UPDATE student_details SET name='$name',age='$age',class_id='$class',gender = '$gender',dob = '$date' WHERE id = '$id'";
+          $sql = "UPDATE student_details SET name='$name',age='$age',class_id='$class',gender = '$gender',dob = '$date', hobbies = '$hobbies' WHERE id = '$id'";
 
         }
         if ($conn->query($sql) === TRUE) {
@@ -281,7 +282,7 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
             <?php
                 if(isset($_GET['action']) && $_GET['action'] == 'update'){
                   $id = $_GET['id'];
-                  $sql = "SELECT student_details.id,student_details.name,student_details.age,student_details.gender,class_details.class,student_details.photo,student_details.dob,class_details.id  as c_id FROM student_details INNER JOIN class_details ON student_details.class_id = class_details.id WHERE student_details.id = '$id'";
+                  $sql = "SELECT student_details.id,student_details.name,student_details.age,student_details.gender,class_details.class,student_details.photo,student_details.dob,student_details.hobbies,class_details.id  as c_id FROM student_details INNER JOIN class_details ON student_details.class_id = class_details.id WHERE student_details.id = '$id'";
                   $result = $conn->query($sql);
                   if ($result->num_rows > 0) {
                     while($row = $result->fetch_assoc()) {
@@ -296,6 +297,7 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
                       $photo = $row['photo'];
                       $date = $row['dob'];  
                       $sid = $row['id'];
+                      $hobbies = $row['hobbies'];
                       $sql2 = "SELECT * FROM parent_details WHERE student_id = '$sid'";
                       $result2 = $conn->query($sql2);
                       if($result2->num_rows > 0){
@@ -307,6 +309,7 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
                           $mother_number = $row2['mother_number'];
                           $mother_mail = $row2['mother_mail'];
                           $primary = $row2['primary_contact'];
+                          
 
                         }
                       }else{
@@ -317,6 +320,7 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
                           $mother_number =  '';
                           $mother_mail = '';
                           $primary = '';
+                          
 
                       }
             ?>
@@ -446,27 +450,37 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
                             <div class="mb-3">
                                 
                                 <div>
-                                <label for="primary" class="form-label"><span class="text-danger">*</span>Primary Contact: </label>
-                                <div class="form-check form-check-inline">
-                                  <input type="radio" name="primary" class="form-check-input" id="father" value="father" <?php echo ($primary == 'father') ? 'checked' : ''; ?>>
-                                  <label class="form-check-label" for="father">Father</label>
+                                  <label for="primary" class="form-label"><span class="text-danger">*</span>Primary Contact: </label>
+                                  <div class="form-check form-check-inline">
+                                    <input type="radio" name="primary" class="form-check-input" id="father" value="father" <?php echo ($primary == 'father') ? 'checked' : ''; ?>>
+                                    <label class="form-check-label" for="father">Father</label>
+                                  </div>
+                                  <div class="form-check form-check-inline">
+                                    <input type="radio" name="primary" class="form-check-input" id="mother" value="mother" <?php echo ($primary == 'mother') ? 'checked' : ''; ?>>
+                                    <label class="form-check-label" for="mother">Mother</label>
+                                  </div>
+                                  <span class="text-danger size" id="alertprimary"></span>
                                 </div>
-                                <div class="form-check form-check-inline">
-                                  <input type="radio" name="primary" class="form-check-input" id="mother" value="mother" <?php echo ($primary == 'mother') ? 'checked' : ''; ?>>
-                                  <label class="form-check-label" for="mother">Mother</label>
-                                </div>
-                                <span class="text-danger size" id="alertprimary"></span>
                             </div>
+                    
+                    
+                    </div>
+                    <div class="row">
+                        <div class="col-12 col-md-4">
+                                <div class="mb-3">
+                                    <label for="hobbies" class="form-label"><span class="text-danger"></span>Hobbies</label>
+                                    <input type="text" name="hobbies" class="form-control form-bottom" id="hobbies" value ="<?php echo $hobbies;?>" placeholder = "Enter Your Hobbies" >
+                                    <span class="text-danger size"></span>
+                                </div>
+                        </div>
                     </div>
                     
-                    
-                  </div>
                   <div class=" col-12 form-group row mt-2">
                       <div class="col-12 text-center">
-                      <a class="btn btn-primary btn-sm" href="javascript:history.back()">Go Back</a>
+                        <a class="btn btn-primary btn-sm" href="javascript:history.back()">Go Back</a>
                         <input type="submit" class="btn btn-primary mt-2" name="supdate" value="Update">
                       </div>
-                    </div>
+                  </div>
                   </form>
              </div>
 
@@ -519,7 +533,7 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
               }elseif(isset($_GET['action']) && $_GET['action'] == 'gallery'){
   //Gallery view----==================================================Gallery view================================Gallery view================================Gallery view===============================================================
               $id = $_GET['id'];
-              $name = $_GET['name'];
+              // $name = $_GET['name'];
               $sql = "SELECT student_gallery.gallery_photo, student_details.name,student_details.register_id, student_details.age, student_details.gender, class_details.class, student_details.dob FROM student_gallery INNER JOIN student_details ON student_gallery.student_id = student_details.id INNER JOIN class_details ON student_details.class_id = class_details.id WHERE student_gallery.student_id = '$id'";
               $result = $conn->query($sql);
               if($result->num_rows > 0){
@@ -564,18 +578,14 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
     $gender = '';
     $class = '';
     echo "<div class='container border shadow'>
-    <div class='row col-12 text-center'>
-    <h2>Student Details</h2></div><hr><hr>
-    <div class='row col-12 '><strong><p>Registration ID : $id </p></strong>
-    <strong><p>Student Name : $name </p>
-    </div><hr><hr>
+    
     <div class='row col-12 text-center'>
     <h2>Gallery</h2>
     </div><hr><hr>
     <div class='row mt-4'>
     <p>No images found in the gallery.</p>
     <div class='text-center mt-3'>
-      <a href='view.php?action=update&id=<?php echo $id; ?>' class='btn btn-success btn-sm'>Add Gallery</a>
+      <a href='view.php?action=update&id=$id' class='btn btn-success btn-sm'>Add Gallery</a>
     </div>
     </div></div>";
   
@@ -723,57 +733,63 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
       
 
   }else {
-    $sql = "SELECT * FROM student_details ORDER BY priority ASC";
+    $sql = "SELECT student_details.id, student_details.name, student_details.age, student_details.gender, student_details.photo, student_details.register_id, student_details.status, student_details.dob, class_details.class 
+        FROM student_details 
+        INNER JOIN class_details ON student_details.class_id = class_details.id 
+        WHERE (student_details.status = 'active' OR student_details.status = 'inactive')
+        ORDER BY student_details.priority ASC";
     $result = $conn->query($sql);
     ?>
     <thead class="dblur">
-        <tr>
-            <th scope="col" style="text-align: center;">Registration Id</th>
-            <th scope="col">Name</th>
-            <th scope="col" style="text-align: center;">Class</th>
-            <th scope="col" style="text-align: center;">Age</th>
-            <th scope="col" style="text-align: center;">Dob</th>
-            <th scope="col" style="text-align: center;">Gender</th>
-            <th scope="col" style="text-align: center;">Action</th>
-            <th scope="col" style="text-align: center;">Image</th>
-            <th scope="col" style="text-align: center;">Gallery</th>
-            <th scope="col" style="text-align: center;">Status</th>
-        </tr>
+      <tr>
+        <th scope="col" style="text-align: center;"></th>
+        <th scope="col" style="text-align: center;">Registration Id</th>
+        <th scope="col">Name</th>
+        <th scope="col" style="text-align: center;">Class</th>
+        <th scope="col" style="text-align: center;">Age</th>
+        <th scope="col" style="text-align: center;">Dob</th>
+        <th scope="col" style="text-align: center;">Gender</th>
+        <th scope="col" style="text-align: center;">Action</th>
+        <th scope="col" style="text-align: center;">Image</th>
+        <th scope="col" style="text-align: center;">Gallery</th>
+        <th scope="col" style="text-align: center;">Status</th>
+      </tr>
     </thead>
     <tbody>
-        <?php
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $self = $_SERVER['PHP_SELF'];
-                $id = $row["id"];
-                echo "<tr draggable='true' data-id='$id'>";
-                echo "<td class='text-center'>" . $row["register_id"] . "</td>";
-                echo "<td>" . ucfirst($row["name"]) . "</td>";
-                echo "<td class='text-center'>" . ucfirst($row["class_id"]) . "</td>";
-                echo "<td class='text-center'>" . $row["age"] . "</td>";
-                echo "<td class='text-center'>" . date('jS M Y', strtotime($row["dob"])) . "</td>";
-                echo "<td class='text-center'>" . ucfirst($row["gender"]) . "</td>";
-                echo "<td class='text-center'>
-                    <a href='$self?action=update&id=$id'><img src='edit.png' style='width:20px;height:auto;'></a>
-                    <div style='display:inline-block; width:10px;'></div>
-                    <a href='#' onclick='confirmDelete(\"$id\")'><img src='delete.png' style='width:20px;height:auto;'></a>
-                </td>";
-                $path = $row['photo'];
-                echo "<td class='text-center'><a href='#' onclick='passMessage(\"$path\")'><img src='witness.png' style='width:20px;height:auto;'></a></td>";
-                echo "<td class='text-center'><a href='$self?action=gallery&id=$id'><img src='gallery.png' style='width:20px;height:auto;'></a></td>";
-                $i = $row['id'];
-                $checked = ($row['status'] == 'active') ? 'checked' : '';
-                echo "<td class='text-center'><input class='input-switch' type='checkbox' id='$i' $checked>
-                      <label class='label-switch' for='$i'></label><span class='info-text'></span></td>";
-                echo "</tr>";
-            }
-        } else {
-            echo "<tr><td colspan='10' class='text-center'>No results</td></tr>";
+      <?php
+      if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+          $self = $_SERVER['PHP_SELF'];
+          $id = $row["id"];
+          echo "<tr draggable='true' data-id='$id'>";
+            echo "<td class='text-center'><img draggable='false' class='$id' id='dragimage' src='drag-and-drop.png' style='width:20px;height:auto;'> <div id='$id' style='display:none; width:20px; height:20px;' class='spinner-border text-primary' role='status'><span class='sr-only'></span></div></td>";
+          echo "<td class='text-center'>" . $row["register_id"] . "</td>";
+          echo "<td>" . ucfirst($row["name"]) . "</td>";
+          echo "<td class='text-center'>" . ucfirst($row["class"]) . "</td>";
+          echo "<td class='text-center'>" . $row["age"] . "</td>";
+          echo "<td class='text-center'>" . date('jS M Y', strtotime($row["dob"])) . "</td>";
+          echo "<td class='text-center'>" . ucfirst($row["gender"]) . "</td>";
+          echo "<td class='text-center'>
+            <a draggable='false' href='$self?action=update&id=$id'><img draggable='false' src='edit.png' style='width:20px;height:auto;'></a>
+            <div style='display:inline-block; width:10px;'></div>
+            <a draggable='false' href='#' onclick='confirmDelete(\"$id\")'><img draggable='false' src='delete.png' style='width:20px;height:auto;'></a>
+          </td>";
+          $path = $row['photo'];
+          echo "<td class='text-center'><a draggable='false' href='#' onclick='passMessage(\"$path\")'><img draggable='false' src='witness.png' style='width:20px;height:auto;'></a></td>";
+          echo "<td class='text-center'><a draggable='false' href='$self?action=gallery&id=$id'><img draggable='false' src='gallery.png' style='width:20px;height:auto;'></a></td>";
+          $i = $row['id'];
+          $checked = ($row['status'] == 'active') ? 'checked' : '';
+          echo "<td class='text-center'><input  class='input-switch' type='checkbox' id='$i' $checked>
+              <label class='label-switch' for='$i'></label><span class='info-text'></span></td>";
+          echo "</tr>";
         }
+      } else {
+        echo "<tr><td colspan='11' class='text-center'>No results</td></tr>";
+      }
       
 
+    }
   }
-}
 
 
 
@@ -817,62 +833,86 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
   ?>
 
 <script>
-    const table = document.querySelector("#studentTable tbody");
-    let draggedRow = null;
+  const table = document.querySelector("#studentTable tbody");
+  let draggedRow = null;
 
-    table.addEventListener("dragstart", (e) => {
-        draggedRow = e.target;
-        e.target.classList.add("dragging");
-    });
+  table.addEventListener("dragstart", (e) => {
+    draggedRow = e.target;
+    e.target.classList.add("dragging");
+  });
 
-    table.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        const afterElement = getDragAfterElement(table, e.clientY);
-        if (afterElement == null) {
-            table.appendChild(draggedRow);
-        } else {
-            table.insertBefore(draggedRow, afterElement);
-        }
-    });
-
-    table.addEventListener("dragend", () => {
-        draggedRow.classList.remove("dragging");
-        updatePriorities();
-    });
-
-    function getDragAfterElement(container, y) {
-        const draggableElements = [...container.querySelectorAll("tr:not(.dragging)")];
-        return draggableElements.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
-            if (offset < 0 && offset > closest.offset) {
-                return { offset: offset, element: child };
-            } else {
-                return closest;
-            }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
+  table.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    const afterElement = getDragAfterElement(table, e.clientY);
+    if (afterElement == null) {
+      table.appendChild(draggedRow);
+    } else {
+      table.insertBefore(draggedRow, afterElement);
     }
+  });
 
-    function updatePriorities() {
-        const rows = table.querySelectorAll("tr");
-        const order = Array.from(rows).map((row, index) => ({
-            id: row.getAttribute("data-id"),
-            priority: index + 1
-        }));
+  table.addEventListener("dragend", () => {
+    draggedRow.classList.remove("dragging");
+    
+    showLoader(draggedRow.getAttribute("data-id"));
+    updatePriorities();
+  });
 
-        fetch("update_priority.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(order)
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log(data.message);
-        })
-        .catch(error => {
-            console.error("Error updating priorities:", error);
-        });
-    }
+  function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll("tr:not(.dragging)")];
+    return draggableElements.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child };
+      } else {
+        return closest;
+      }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+  }
+
+  function updatePriorities() {
+    const rows = table.querySelectorAll("tr");
+    const order = Array.from(rows).map((row, index) => ({
+      id: row.getAttribute("data-id"),
+      priority: index + 1
+    }));
+    console.log(order);
+    fetch("update_priority.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(order)
+    })
+    .then(response => response.text())  // Get the response as text first
+    .then(data => {
+      console.log(data);  // Log the actual response
+      try {
+        const jsonData = JSON.parse(data);
+        console.log(jsonData.message);
+        hideLoader(draggedRow.getAttribute("data-id"));
+      } catch (error) {
+        console.error("Error parsing JSON:", error);
+        hideLoader(draggedRow.getAttribute("data-id"));
+      }
+    })
+    .catch(error => {
+      console.error("Error updating priorities:", error);
+      hideLoader(draggedRow.getAttribute("data-id"));
+    });
+  }
+
+  function showLoader(dataId) {
+    document.getElementsByClassName(dataId)[0].style.display = 'none';
+    document.getElementById(dataId).style.display = 'block';
+
+  }
+
+  function hideLoader(dataId) {
+    document.getElementById(dataId).style.display = 'none';
+    document.getElementsByClassName(dataId)[0].style.display = 'block';
+
+
+  }
 </script>
   <script src="js/modal.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
