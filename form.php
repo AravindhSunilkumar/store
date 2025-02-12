@@ -79,6 +79,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
         $class = $conn->real_escape_string($_POST['class']);
         
         $dob = $conn->real_escape_string($_POST['dob']);
+        $hobbies = implode(',', array_map(array($conn, 'real_escape_string'), $_POST['hobbies']));
         $sql2 = "SELECT * FROM student_details ORDER BY priority DESC LIMIT 1";
         $result2 = $conn->query($sql2);
         
@@ -92,7 +93,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
         }
 
         // echo "it ok";
-            $sql = "INSERT INTO student_details(name, class_id, age, gender, priority, photo, register_id,dob) VALUES ('$name', '$class', '$age', '$gender', '$priority', '$target_file', '$student_id','$dob')";
+            $sql = "INSERT INTO student_details(name, class_id, age, gender, priority, photo, register_id,dob,hobbies) VALUES ('$name', '$class', '$age', '$gender', '$priority', '$target_file', '$student_id','$dob','$hobbies')";
             if ($conn->query($sql) === TRUE) {
                 $last_id = $conn->insert_id;
                 if (!empty($_FILES['files']['name'][0])) {
@@ -104,7 +105,8 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
                             'error' => $_FILES['files']['error'][$key],
                             'size' => $_FILES['files']['size'][$key]
                         );
-                        $gallery_file = uploadImage($file,$student_id);
+                        $number = rand(0000,9999);
+                        $gallery_file = uploadImage($file,$number);
                         if ($gallery_file !== false) {
                             $sql_gallery = "INSERT INTO student_gallery(student_id, gallery_photo) VALUES ('$last_id', '$gallery_file')";
                             if ($conn->query($sql_gallery) !== TRUE) {
@@ -128,7 +130,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'  && isset($_POST['submit'])){
                 echo "<script>
                 alert('successfull');window.location.href = 'view.php';
             </script>";
-            header('Location: view.php');
+            // header('Location: view.php');
             }else{
                 echo $conn->error;
             }
@@ -461,6 +463,32 @@ if($_SERVER['REQUEST_METHOD'] == 'GET' and (isset($_GET['dob']))){
                 </div>
             </div>
     </div>
+    
+    
+        <div class="row mt-2">
+          <div class="col-12 col-md-6">
+            <div id="hobbies-container">
+              <div class="dem mb-3"><label for="">Hobbies</label>
+                <input type="text" name="hobbies[]" class="form-control col-6 col-md-3" placeholder="Enter a hobby">
+                <button class="sm-btn btn-outline-secondary col-6 col-md-3" type="button" onclick="addHobby()">Add More</button>
+              </div>
+            </div>
+          </div>
+        </div>
+                    <script>
+                      function addHobby() {
+                        var container = document.getElementById('hobbies-container');
+                        var inputGroup = document.createElement('div');
+                        inputGroup.className = 'dem mb-3';
+                        inputGroup.innerHTML = '<input type="text" name="hobbies[]" class="form-control" placeholder="Enter a hobby"><button class="btn btn-outline-secondary" type="button" onclick="removeHobby(this)">Remove</button>';
+                        container.appendChild(inputGroup);
+                      }
+
+                      function removeHobby(button) {
+                        var inputGroup = button.parentElement;
+                        inputGroup.remove();
+                      }
+                    </script>
     <div class="row">
         <div class="col-12 d-flex justify-content-between mt-3">
             <div class="col-auto">
@@ -472,6 +500,7 @@ if($_SERVER['REQUEST_METHOD'] == 'GET' and (isset($_GET['dob']))){
             </div>
         </div>
     </div>
+
     </form>
     </div>
 
@@ -654,6 +683,24 @@ if($_SERVER['REQUEST_METHOD'] == 'GET' and (isset($_GET['dob']))){
     </script>
 <script>
     function showViewButton() {
+        const fileInput = document.getElementById('file');
+        const file = fileInput.files[0];
+        const validImageTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+
+        if (!validImageTypes.includes(file.type)) {
+            alert('Invalid file type. Please upload an image file (jpg, jpeg, png, gif).');
+            fileInput.value = ''; // Clear the input
+            document.getElementById('viewButton').style.display = 'none';
+            return;
+        }
+
+        if (file.size > 5000000) { // 5MB
+            alert('File size exceeds 5MB. Please upload a smaller file.');
+            fileInput.value = ''; // Clear the input
+            document.getElementById('viewButton').style.display = 'none';
+            return;
+        }
+
         document.getElementById('viewButton').style.display = 'inline-block';
     }
 
@@ -669,34 +716,52 @@ if($_SERVER['REQUEST_METHOD'] == 'GET' and (isset($_GET['dob']))){
         };
         reader.readAsDataURL(file);
     }
-    </script>
- <script>
-        function showGalleryButton() {
-            document.getElementById('galleryButton').style.display = 'inline-block';
+</script>
+<script>
+    function showGalleryButton() {
+        const filesInput = document.getElementById('files');
+        const files = filesInput.files;
+        const validImageTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+        let valid = true;
+
+        Array.from(files).forEach(file => {
+            if (!validImageTypes.includes(file.type) || file.size > 5000000) { // 5MB
+                valid = false;
+            }
+        });
+
+        if (!valid) {
+            alert('Invalid file type or file size exceeds 5MB in gallery. Please upload image files (jpg, jpeg, png, gif) below 5MB.');
+            filesInput.value = ''; // Clear the input
+            document.getElementById('galleryButton').style.display = 'none';
+            return;
         }
 
-        function viewGallery() {
-            const filesInput = document.getElementById('files');
-            const files = filesInput.files;
-            const galleryPreview = document.getElementById('galleryPreview');
-            galleryPreview.innerHTML = ''; // Clear previous previews
+        document.getElementById('galleryButton').style.display = 'inline-block';
+    }
 
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function() {
-                    const img = document.createElement('img');
-                    img.src = reader.result;
-                    img.style.maxWidth = '100px';
-                    img.style.margin = '5px';
-                    galleryPreview.appendChild(img);
-                };
-                reader.readAsDataURL(file);
-            });
+    function viewGallery() {
+        const filesInput = document.getElementById('files');
+        const files = filesInput.files;
+        const galleryPreview = document.getElementById('galleryPreview');
+        galleryPreview.innerHTML = ''; // Clear previous previews
 
-            const galleryModal = new bootstrap.Modal(document.getElementById('galleryModal'));
-            galleryModal.show();
-        }
-        </script>
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function() {
+                const img = document.createElement('img');
+                img.src = reader.result;
+                img.style.maxWidth = '100px';
+                img.style.margin = '5px';
+                galleryPreview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        const galleryModal = new bootstrap.Modal(document.getElementById('galleryModal'));
+        galleryModal.show();
+    }
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
