@@ -208,6 +208,7 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
 
 
   <link rel="stylesheet" type="text/css" href="css_files/modal.css">
+  
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
@@ -697,7 +698,7 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
       while($row = $result->fetch_assoc()) {
         $self = $_SERVER['PHP_SELF'];
         $id = $row["id"];
-        echo "<tr>";
+        echo "<tr >";
         
         echo "<td class='text-center'>" . $row["register_id"]. "</td>";
         echo "<td >" . ucfirst($row["name"]). "</td>";
@@ -719,10 +720,13 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
         echo "<td class='text-center'><a href='$self?action=gallery&id=$id&name=$name'><img src='gallery.png' style='width:20px;height:auto;' alt='gallery image'></a></td>";
        
         $i = $row['id'];
+        
         $checked = ($row['status'] == 'active') ? 'checked' : '';
-        echo "<td class='text-center'><input class='input-switch' type='checkbox' id='$i' $checked>
-              <label class='label-switch' for='$i'></label>
-              <span class='info-text'></span></td>";
+        echo "<td class='text-center'>
+        <div class='form-check form-switch'>
+          <input class='form-check-input input-switch'  type='checkbox' id='$id' $checked>
+        </div>
+      </td>";
         echo "</tr>";
 
       }
@@ -756,36 +760,39 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
       </tr>
     </thead>
     <tbody>
-      <?php
-      if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-          $self = $_SERVER['PHP_SELF'];
-          $id = $row["id"];
-          echo "<tr draggable='true' data-id='$id'>";
-            echo "<td class='text-center'><img draggable='false' class='$id' id='dragimage' src='drag-and-drop.png' style='width:20px;height:auto;'> <div id='$id' style='display:none; width:20px; height:20px;' class='spinner-border text-primary' role='status'><span class='sr-only'></span></div></td>";
-          echo "<td class='text-center'>" . $row["register_id"] . "</td>";
-          echo "<td>" . ucfirst($row["name"]) . "</td>";
-          echo "<td class='text-center'>" . ucfirst($row["class"]) . "</td>";
-          echo "<td class='text-center'>" . $row["age"] . "</td>";
-          echo "<td class='text-center'>" . date('jS M Y', strtotime($row["dob"])) . "</td>";
-          echo "<td class='text-center'>" . ucfirst($row["gender"]) . "</td>";
-          echo "<td class='text-center'>
-            <a draggable='false' href='$self?action=update&id=$id'><img draggable='false' src='edit.png' style='width:20px;height:auto;'></a>
-            <div style='display:inline-block; width:10px;'></div>
-            <a draggable='false' href='#' onclick='confirmDelete(\"$id\")'><img draggable='false' src='delete.png' style='width:20px;height:auto;'></a>
-          </td>";
-          $path = $row['photo'];
-          echo "<td class='text-center'><a draggable='false' href='#' onclick='passMessage(\"$path\")'><img draggable='false' src='witness.png' style='width:20px;height:auto;'></a></td>";
-          echo "<td class='text-center'><a draggable='false' href='$self?action=gallery&id=$id'><img draggable='false' src='gallery.png' style='width:20px;height:auto;'></a></td>";
-          $i = $row['id'];
-          $checked = ($row['status'] == 'active') ? 'checked' : '';
-          echo "<td class='text-center'><input  class='input-switch' type='checkbox' id='$i' $checked>
-              <label class='label-switch' for='$i'></label><span class='info-text'></span></td>";
-          echo "</tr>";
-        }
-      } else {
-        echo "<tr><td colspan='11' class='text-center'>No results</td></tr>";
-      }
+  <?php
+  if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+      $self = $_SERVER['PHP_SELF'];
+      $id = $row["id"];
+      echo "<tr draggable='true' data-id='$id'>";
+      echo "<td class='text-center'><img draggable='false' class='$id' id='dragimage' src='drag-and-drop.png' style='width:20px;height:auto;'> <div id='$id' style='display:none; width:20px; height:20px;' class='spinner-border text-primary' role='status'><span class='sr-only'></span></div></td>";
+      echo "<td class='text-center'>" . $row["register_id"] . "</td>";
+      echo "<td>" . ucfirst($row["name"]) . "</td>";
+      echo "<td class='text-center'>" . ucfirst($row["class"]) . "</td>";
+      echo "<td class='text-center'>" . $row["age"] . "</td>";
+      echo "<td class='text-center'>" . date('jS M Y', strtotime($row["dob"])) . "</td>";
+      echo "<td class='text-center'>" . ucfirst($row["gender"]) . "</td>";
+      echo "<td class='text-center'>
+              <a draggable='false' href='$self?action=update&id=$id'><img draggable='false' src='edit.png' style='width:20px;height:auto;'></a>
+              <div style='display:inline-block; width:10px;'></div>
+              <a draggable='false' href='#' onclick='confirmDelete(\"$id\")'><img draggable='false' src='delete.png' style='width:20px;height:auto;'></a>
+            </td>";
+      $path = $row['photo'];
+      echo "<td class='text-center'><a draggable='false' href='#' onclick='passMessage(\"$path\")'><img draggable='false' src='witness.png' style='width:20px;height:auto;'></a></td>";
+      echo "<td class='text-center'><a draggable='false' href='$self?action=gallery&id=$id'><img draggable='false' src='gallery.png' style='width:20px;height:auto;'></a></td>";
+
+      $checked = ($row['status'] == 'active') ? 'checked' : '';
+      echo "<td class='text-center'>
+              <div class='form-check form-switch'>
+                <input class='form-check-input input-switch'  type='checkbox' id='$id' $checked>
+              </div>
+            </td>";
+      echo "</tr>";
+    }
+  } else {
+    echo "<tr><td colspan='11' class='text-center'>No results</td></tr>";
+  }
       
 
     }
@@ -833,6 +840,10 @@ if(isset($_GET['action']) && $_GET['action'] == 'delete'){
   ?>
 
 <script>
+
+
+
+
   const table = document.querySelector("#studentTable tbody");
   let draggedRow = null;
 
